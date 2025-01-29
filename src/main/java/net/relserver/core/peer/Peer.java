@@ -1,6 +1,6 @@
 package net.relserver.core.peer;
 
-import net.relserver.core.Utils;
+import net.relserver.core.util.Utils;
 
 import java.util.Locale;
 

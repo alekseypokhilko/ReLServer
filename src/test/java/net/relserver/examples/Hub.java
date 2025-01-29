@@ -1,9 +1,9 @@
 package net.relserver.examples;
 
-import net.relserver.ReLserverCliRunner;
+import net.relserver.ReLServerCliRunner;
 
 public class Hub {
     public static void main(String[] args) {
-        ReLserverCliRunner.main(new String[]{"hub"});
+        ReLServerCliRunner.main(new String[]{"hub"});
     }
 }

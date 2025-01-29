@@ -1,6 +1,6 @@
 package net.relserver.examples;
 
-import net.relserver.ReLserverCliRunner;
+import net.relserver.ReLServerCliRunner;
 
 public class Server {
     public static void main(String[] args) {
@@ -11,7 +11,7 @@ public class Server {
         String appId = "mc4_ios";
 
 //        ReLserverCliRunner.main(new String[]{"server"});
-        ReLserverCliRunner.main(new String[]{
+        ReLServerCliRunner.main(new String[]{
                 "-mode=server",
                 "-appId=" + appId,
                 "-hubIp=" + hubIp,

@@ -1,7 +1,7 @@
 package net.relserver.core.peer;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Utils;
+import net.relserver.core.Id;
 import net.relserver.core.app.App;
 
 public class PeerFactory {
@@ -14,16 +14,16 @@ public class PeerFactory {
     }
 
     public Peer clientRouterPeer() {
-        return Peer.of(peerManager.getId(), Utils.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.CLIENT, null, null, app.getId(), null);
+        return Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.CLIENT, null, null, app.getId(), null);
     }
 
     public Peer serverRouterPeer() {
-        return Peer.of(peerManager.getId(), Utils.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.SERVER, null, null, app.getId(), null);
+        return Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.SERVER, null, null, app.getId(), null);
     }
 
     public PeerPair createClientPeerPair(Peer remoteServer) {
-        String peerId = Utils.generateId(Constants.CLIENT_PREFIX);
-        String remotePeerId = Utils.generateId(Constants.SERVER_PREFIX);
+        String peerId = Id.generateId(Constants.CLIENT_PREFIX);
+        String remotePeerId = Id.generateId(Constants.SERVER_PREFIX);
         Peer peer = Peer.of(
                 peerManager.getId(), peerId,
                 State.CONNECTED, Mode.CLIENT,

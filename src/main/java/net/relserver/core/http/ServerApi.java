@@ -7,4 +7,7 @@ import retrofit2.http.GET;
 public interface ServerApi {
     @GET(Constants.APPLICATIONS_CONFIG_URL)
     Call<String> applications();
+
+    @GET(Constants.HUBS_URL)
+    Call<String> hubs();
 }

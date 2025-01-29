@@ -10,6 +10,7 @@ import net.relserver.core.peer.PeerFactory;
 import net.relserver.core.peer.PeerManager;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.server.ServerRouter;
+import net.relserver.core.util.Logger;
 
 import java.io.IOException;
 
@@ -17,15 +18,16 @@ import java.io.IOException;
 //todo synchronize collection access
 //todo exception handling
 //todo fix thread busy waiting
-public class ReLserver {
+public class ReLServer {
 
     private HubServer hub;
     private ClientRouter client;
     private ServerRouter server;
     private PeerManager peerManager;
 
-    public ReLserver(Settings settings, AppCatalog appCatalog) {
-        Utils.log("Starting ReLserver with settings: "+ settings);
+    public ReLServer(Settings settings, AppCatalog appCatalog) {
+        Logger.init(settings);
+        Logger.log("Starting ReLServer with settings: %s", settings);
         Mode mode = settings.getMode();
         if (Mode.HUB == mode) {
             hub = new HubServer(settings);
@@ -33,7 +35,7 @@ public class ReLserver {
         }
 
         App app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
-        Utils.log("Selected app: " + app);
+        Logger.log("Selected app: %s", app);
         peerManager = new PeerManager(settings, app);
         PeerFactory peerFactory = new PeerFactory(app, peerManager);
         PortFactory portFactory = new PortFactory(app, settings);

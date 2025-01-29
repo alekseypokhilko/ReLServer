@@ -28,7 +28,7 @@ public class DefaultAppCatalog implements AppCatalog {
     private void loadApps() {
         if (this.apps != null) return;
         this.apps = AppLoader.loadFromRemoteRepository();
-        if (this.apps != null) return;
+        if (!this.apps.isEmpty()) return;
         this.apps = AppLoader.loadFromResourcesFolder();
     }
 }

@@ -1,16 +1,15 @@
 package net.relserver.core.peer;
 
-import net.relserver.core.Constants;
-import net.relserver.core.Id;
-import net.relserver.core.Settings;
-import net.relserver.core.Utils;
+import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.proxy.Proxy;
+import net.relserver.core.util.Logger;
 
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -23,16 +22,16 @@ public class PeerManager implements Id {
     private final List<Consumer<Peer>> onNewRemotePeerActions = new CopyOnWriteArrayList<>(); //todo deal with not actual handlers
 
     public PeerManager(Settings settings, App app) {
-        this.id = Utils.generateId(Constants.PEER_MANAGER_PREFIX);
-        String hubIp = settings.getString(Settings.hubIp);
+        this.id = Id.generateId(Constants.PEER_MANAGER_PREFIX);
+        List<String> hubIps = getHubIps(settings);
+        if (hubIps.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find Hub to connect");
+        }
+        String hubIp = hubIps.get(0);
         int hubServicePort = settings.getInt(Settings.hubServicePort);
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
-
         Host service = new Host(hubIp, hubServicePort, Protocol.TCP);
         Host registrationService = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
-        if (service.getProtocol() != Protocol.TCP || registrationService.getProtocol() != Protocol.UDP) {
-            throw new NullPointerException("Connection properties must not be null");
-        }
         this.app = app;
         this.registrationServiceHost = registrationService;
 
@@ -43,6 +42,25 @@ public class PeerManager implements Id {
         }
 
         runPeerInfosReceiverThread();
+    }
+
+    private static List<String> getHubIps(Settings settings) {
+        String hubIp = settings.getString(Settings.hubIp);
+        List<String> remoteIps;
+        List<String> resourceIps;
+        if (hubIp != null && !hubIp.isEmpty()) {
+            ArrayList<String> ip = new ArrayList<>();
+            ip.add(hubIp);
+            return ip;
+        } else if (!(remoteIps = HubLoader.loadFromRemoteRepository()).isEmpty()) {
+            return remoteIps;
+        } else if (!(resourceIps = HubLoader.loadFromResourcesFolder()).isEmpty()) {
+            return resourceIps;
+        } else {
+            ArrayList<String> localhostHub = new ArrayList<>();
+            localhostHub.add("127.0.0.1");
+            return localhostHub;
+        }
     }
 
     private void runPeerInfosReceiverThread() {
@@ -60,15 +78,14 @@ public class PeerManager implements Id {
                     receiveRemotePeer(peerInfo);
                 }
             } catch (IOException e) {
-                Utils.log("Disconnected from Hub: " + e.getMessage());
-                e.printStackTrace(); //todo
+                Logger.log("Disconnected from Hub: %s", e.getMessage());
             }
         }, "peerInfoReceiver-" + this.id).start();
     }
 
     private void receiveRemotePeer(String peerInfo) {
         if (peerInfo == null || peerInfo.isEmpty()) {
-            return; //todo notify?
+            return;
         }
         try {
             Peer peer = Peer.of(peerInfo);
@@ -99,12 +116,12 @@ public class PeerManager implements Id {
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length);
         client.getPort().send(packet, this.registrationServiceHost);
-        Utils.log("Registered on hub: " + message);
+        Logger.log("Registered on hub: %s", message);
     }
 
     public void subscribeOnRemotePeerChanged(Consumer<Peer> action) {
         synchronized (onNewRemotePeerActions) {
-            this.onNewRemotePeerActions.add(action);
+            this.onNewRemotePeerActions.add(action); //todo remove
         }
     }
 
@@ -117,7 +134,7 @@ public class PeerManager implements Id {
         try {
             serviceSocket.close();
         } catch (Exception e) {
-            Utils.log("Exception while closing service socket: " + e.getMessage());
+            Logger.log("Exception while closing service socket: %s", e.getMessage());
         }
     }
 }

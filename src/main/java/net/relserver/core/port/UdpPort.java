@@ -1,7 +1,8 @@
 package net.relserver.core.port;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Utils;
+import net.relserver.core.Id;
+import net.relserver.core.util.Logger;
 import net.relserver.core.peer.Host;
 import net.relserver.core.Settings;
 
@@ -23,7 +24,8 @@ public class UdpPort implements Port<DatagramPacket> {
         } catch (IOException ex) {
             throw new RuntimeException("Error creating socket: " + ex.getMessage(), ex);
         }
-        this.id = Utils.generateId(Constants.PORT_PREFIX + udpSocket.getLocalPort());
+        String prefix = Constants.PORT_PREFIX + udpSocket.getLocalPort();
+        this.id = Id.generateId(prefix);
         runReceiverThread();
     }
 
@@ -34,25 +36,22 @@ public class UdpPort implements Port<DatagramPacket> {
     protected void runReceiverThread() {
         new Thread(() -> {
             Integer bufSize = settings.getInt(Settings.packetBufferSize);
-            String log = settings.getString(Settings.log);
             while (true) {
                 try {
                     byte[] buf2 = new byte[bufSize];  //todo check GC stats
                     DatagramPacket packet = new DatagramPacket(buf2, buf2.length);
                     if (udpSocket.isClosed()) {
-                        Utils.log("Socket " + this.id + " closed");
+                        Logger.log("Socket %s closed", this.id);
                         return;
                     }
                     udpSocket.receive(packet);
-                    if (log != null) {
-                        Utils.logPacket(packet, false);
-                    }
+                    Logger.logPacket(packet, false);
                     if (this.onPacketReceived != null) {
                         this.onPacketReceived.accept(packet);
                     }
                 } catch (SocketTimeoutException ignore) {
                 } catch (SocketException ignore) {
-                    Utils.log("Socket " + this.id + " closed");
+                    Logger.log("Socket %s closed", this.id);
                     return;
                 } catch (Exception e) {
                     e.printStackTrace();//todo
@@ -67,9 +66,7 @@ public class UdpPort implements Port<DatagramPacket> {
         }
         try {
             DatagramPacket p = new DatagramPacket(packet.getData(), packet.getLength(), InetAddress.getByName(host.getIp()), host.getPort());
-            if (settings.getString(Settings.log) != null) {
-                Utils.logPacket(p, true);
-            }
+            Logger.logPacket(p, true);
             udpSocket.send(p);
         } catch (SocketTimeoutException | SocketException ignore) {
             //ignore
@@ -89,7 +86,7 @@ public class UdpPort implements Port<DatagramPacket> {
         try {
             udpSocket.close();
         } catch (Exception e) {
-            Utils.log("Exception while closing port: " + e.getMessage());
+            Logger.log("Exception while closing port: %s", e.getMessage());
         }
     }
 }

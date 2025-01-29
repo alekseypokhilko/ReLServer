@@ -1,6 +1,7 @@
 package net.relserver.core;
 
 import net.relserver.core.peer.Mode;
+import net.relserver.core.util.Logger;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -21,10 +22,11 @@ public class Settings {
     public static final String peerPollIntervalMs = "peerpollintervalMs";
     public static final String packetBufferSize = "packetbuffersize";
     public static final String log = "log";
+    public static final String logPacket = "logPacket";
     private static final Set<String> KEYS = Set.of(
-            mode, hubIp, hubServicePort, hubRegistrationPort, localServerIp, appPort, appId, log,
+            mode, hubIp, hubServicePort, hubRegistrationPort, localServerIp, appPort, appId,
             socketTimeout, udpRegistrationPacketCount, peerPollIntervalMs, packetBufferSize,
-            udpRegistrationPacketDelay
+            udpRegistrationPacketDelay, log, logPacket
     );
 
     private final Map<String, String> params = new HashMap<>();
@@ -52,20 +54,21 @@ public class Settings {
                     }
                 }
             } catch (IllegalArgumentException e) {
-                Utils.log("Illegal option: " + e.getMessage());
+                Logger.log("Illegal option: %s", e.getMessage());
             }
         }
     }
 
     private void init() {
+        params.put(log, "true");
+        params.put(logPacket, "true");
         params.put(mode, "CLIENT_SERVER");
         params.put(localServerIp, "127.0.0.1");
 
-        params.put(hubIp, "127.0.0.1");
+//        params.put(hubIp, "127.0.0.1");
         params.put(hubServicePort, "9000");
         params.put(hubRegistrationPort, "9001");
 
-//        params.put(log, "v");
         params.put(socketTimeout, "3000");
         params.put(udpRegistrationPacketCount, "1");
         params.put(udpRegistrationPacketDelay, "100");

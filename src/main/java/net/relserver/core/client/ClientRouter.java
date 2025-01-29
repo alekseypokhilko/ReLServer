@@ -1,6 +1,7 @@
 package net.relserver.core.client;
 
-import net.relserver.core.Utils;
+import net.relserver.core.util.Logger;
+import net.relserver.core.util.Utils;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.port.PortPair;
@@ -42,7 +43,7 @@ public class ClientRouter implements Proxy {
         peerManager.notifyPeerState(this, State.CONNECTED);
         peerManager.subscribeOnRemotePeerChanged(this::onPeerChanged);
 
-        Utils.log("Router " + this.peer.getId() + " started with ports: listen=" + portPair.getTargetPort().getId() + ", p2p=" + portPair.getP2pPort().getId());
+        Logger.log("Router %s started with ports: listen=%s, p2p=%s", this.peer.getId(), portPair.getTargetPort().getId(), portPair.getP2pPort().getId());
     }
 
     private void onPeerChanged(Peer peer) {
@@ -51,7 +52,7 @@ public class ClientRouter implements Proxy {
                 return;
             }
 
-            Utils.log("Client " + getId() + " received peer: " + peer);
+            Logger.log("Client %s received peer: %s", getId(), peer);
             if (State.DISCONNECTED == peer.getState()) {
                 disconnectFromPeer(peer);
                 return;
@@ -136,11 +137,11 @@ public class ClientRouter implements Proxy {
     }
 
     private void onP2pPacketReceived(DatagramPacket packet) {
-        Utils.logPacket(packet, false);
+        Logger.logPacket(packet, false);
     }
 
     private ClientProxy createProxy(String clientHostPort, Peer remoteServer) {
-        Utils.log("Creating proxy for peer: " + remoteServer);
+        Logger.log("Creating proxy for peer: %s", remoteServer);
         ClientProxy clientProxy = createClientProxy(clientHostPort, remoteServer);
 
         this.proxies.put(clientProxy.getInfo().getId(), clientProxy);

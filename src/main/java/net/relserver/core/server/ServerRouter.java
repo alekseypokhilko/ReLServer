@@ -1,7 +1,7 @@
 package net.relserver.core.server;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Utils;
+import net.relserver.core.util.Logger;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.port.PortPair;
@@ -36,12 +36,12 @@ public class ServerRouter implements Proxy {
 
         peerManager.subscribeOnRemotePeerChanged(this::onPeerChanged);
         peerManager.notifyPeerState(this, State.CONNECTED);
-        Utils.log("Router " + peer.getId() + " started with ports: p2p=" + p2pPort.getId());
+        Logger.log("Router %s started with ports: p2p=%s", peer.getId(), p2pPort.getId());
     }
 
     private void processRequest(DatagramPacket packet) {
         String peerInfo = new String(packet.getData(), StandardCharsets.UTF_8).trim();
-        Utils.log("Router " + peer.getId() + " received create proxy request: '" + peerInfo +"'");
+        Logger.log("Router %s received create proxy request: '%s'", peer.getId(), peerInfo);
         try {
             if (peerInfo.isEmpty() || peerInfo.startsWith(Constants.HANDSHAKE_MESSAGE_PREFIX)) {
                 return;
@@ -56,7 +56,7 @@ public class ServerRouter implements Proxy {
                 peerManager.notifyPeerState(serverProxy, State.CONNECTED);
             }
         } catch (ArrayIndexOutOfBoundsException e) {
-            Utils.log("Illegal peer request: '" + peerInfo + "'");
+            Logger.log("Illegal peer request: '%s'", peerInfo);
         } catch (Exception e) {
             e.printStackTrace(); //todo
         }
@@ -68,7 +68,7 @@ public class ServerRouter implements Proxy {
                 return;
             }
 
-            Utils.log("Server " + getId() + " received peer: " + peer);
+            Logger.log("Server %s received peer: %s", getId(), peer);
             if (State.DISCONNECTED == peer.getState()) {
                 onPeerDisconnected(peer);
                 return;

@@ -1,6 +1,7 @@
 package net.relserver.core.client;
 
-import net.relserver.core.Utils;
+import net.relserver.core.util.Logger;
+import net.relserver.core.util.Utils;
 import net.relserver.core.peer.Host;
 import net.relserver.core.peer.Peer;
 import net.relserver.core.peer.PeerPair;
@@ -28,7 +29,7 @@ public class ClientProxy implements Proxy {
         this.portPair.getP2pPort().setOnPacketReceived(this::processResponse);
 
         this.peerPair = peerPair;
-        Utils.log("Proxy " + peerPair.getPeer().getId() + " started with ports: p2p=" + portPair.getP2pPort().getId() + ", server=" + portPair.getTargetPort().getId());
+        Logger.log("Proxy %s started with ports: p2p=%s, server=%s", peerPair.getPeer().getId(), portPair.getP2pPort().getId(), portPair.getTargetPort().getId());
     }
 
     private void processResponse(DatagramPacket packet) {
@@ -46,7 +47,7 @@ public class ClientProxy implements Proxy {
             Peer clientPeer = peerSupplier.apply(remotePeer.getId());
             if (clientPeer != null && clientPeer.getHost() != null) {
                 remotePeer.setHost(clientPeer.getHost());
-                Utils.log("Cannot get host for peer: " + remotePeer);
+                Logger.log("Cannot get host for peer: %s", remotePeer);
             }
         }
         //from local client -> real remote server
@@ -59,7 +60,7 @@ public class ClientProxy implements Proxy {
 
     @Override
     public void setRemotePeer(Peer remotePeer) {
-        Utils.log("Proxy " + getId() + " changed remote peer from " + peerPair.getRemotePeer() + " to " + remotePeer);
+        Logger.log("Proxy %s changed remote peer from %s to %s", getId(), peerPair.getRemotePeer(), remotePeer);
         this.peerPair.setRemotePeer(remotePeer);
         this.sendHandshakePacket(remotePeer);
     }

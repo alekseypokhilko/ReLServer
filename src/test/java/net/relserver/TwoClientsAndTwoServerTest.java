@@ -14,10 +14,10 @@ public class TwoClientsAndTwoServerTest {
         TestUtils.createClient("client1->", clientPort1);
         TestUtils.createClient("client2->", clientPort2);
 
-        ReLserverCliRunner.main(new String[]{"-mode=hub", "-log=v"});
-        ReLserverCliRunner.main(new String[]{"-mode=client", "-log=v","-appPort=" + clientPort1});
-        ReLserverCliRunner.main(new String[]{"-mode=client", "-log=v","-appPort=" + clientPort2});
-        ReLserverCliRunner.main(new String[]{"-mode=server", "-log=v","-appPort=" + realServerPort});
-        ReLserverCliRunner.main(new String[]{"-mode=server", "-log=v","-appPort=" + realServerPort2});
+        ReLServerCliRunner.main(new String[]{"-mode=hub"});
+        ReLServerCliRunner.main(new String[]{"-mode=client","-appPort=" + clientPort1});
+        ReLServerCliRunner.main(new String[]{"-mode=client","-appPort=" + clientPort2});
+        ReLServerCliRunner.main(new String[]{"-mode=server","-appPort=" + realServerPort});
+        ReLServerCliRunner.main(new String[]{"-mode=server","-appPort=" + realServerPort2});
     }
 }

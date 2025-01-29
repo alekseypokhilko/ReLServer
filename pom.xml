@@ -54,7 +54,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>net.relserver.ReLserverCliRunner</mainClass>
+                            <mainClass>net.relserver.ReLServerCliRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -64,7 +64,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>net.relserver.ReLserverCliRunner</mainClass>
+                            <mainClass>net.relserver.ReLServerCliRunner</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

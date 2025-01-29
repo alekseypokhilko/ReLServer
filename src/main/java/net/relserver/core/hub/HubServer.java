@@ -1,8 +1,9 @@
 package net.relserver.core.hub;
 
 import net.relserver.core.Constants;
+import net.relserver.core.Id;
+import net.relserver.core.util.Logger;
 import net.relserver.core.Settings;
-import net.relserver.core.Utils;
 import net.relserver.core.peer.*;
 
 import java.io.BufferedOutputStream;
@@ -24,7 +25,7 @@ public class HubServer implements AutoCloseable {
     private final Map<String, AppInstance> instances = new ConcurrentHashMap<>();
 
     public HubServer(Settings settings) {
-        this.id = Utils.generateId(Constants.HUB_PREFIX);
+        this.id = Id.generateId(Constants.HUB_PREFIX);
         this.settings = settings;
         int servicePort = settings.getInt(Settings.hubServicePort);
         int registrationPort = settings.getInt(Settings.hubRegistrationPort);
@@ -33,7 +34,7 @@ public class HubServer implements AutoCloseable {
             serverSocket = new ServerSocket(servicePort);
             udpSocket = new DatagramSocket(registrationPort);
             udpSocket.setSoTimeout(settings.getInt(Settings.socketTimeout));
-            Utils.log("Hub " + id + " started with ports, TCP: " + servicePort + " UDP: " + registrationPort);
+            Logger.log("Hub %s started with ports, TCP: %d UDP: %d", id, servicePort, registrationPort);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,8 +50,7 @@ public class HubServer implements AutoCloseable {
                     Socket socket = serverSocket.accept();
                     registerPeerManager(socket);
                 } catch (Exception se) {
-                    Utils.log("Exception on acceptNewPeerManagerConnections thread");
-                    se.printStackTrace();//todo
+                    Logger.log("Exception on acceptNewPeerManagerConnections thread: %s", se.getMessage());
                 }
             }
         }, "acceptConnections-" + id).start();
@@ -63,7 +63,7 @@ public class HubServer implements AutoCloseable {
                 AppInstance instance = getPeerManagerInfo(socket);
                 sendPeers(instance);
                 this.instances.put(instance.getPeerManagerId(), instance);
-                Utils.log("Peer manager " + instance.getPeerManagerId() + " connected: appId=" + instance.getAppId() + " host=" + instance.getHostId());
+                Logger.log("Peer manager %s connected: appId=%s host=%s", instance.getPeerManagerId(), instance.getAppId(), instance.getHostId());
             } catch (Exception e) {
                 e.printStackTrace(); //todo
             }
@@ -97,11 +97,11 @@ public class HubServer implements AutoCloseable {
             if (removed != null) {
                 notifyPeerStateChanged(removed.getServerRouter(), State.DISCONNECTED);
                 notifyPeerStateChanged(removed.getClientRouter(), State.DISCONNECTED);
-                Utils.log("Peer manager " + removed.getPeerManagerId() + " disconnected: " + removed.getHostId());
+                Logger.log("Peer manager %s disconnected: %s", removed.getPeerManagerId(), removed.getHostId());
                 removed.getSocket().close();
             }
         } catch (Exception e) {
-            Utils.log("Error while closing socket: " + e.getMessage());
+            Logger.log("Error while closing socket: %s", e.getMessage());
         }
     }
 
@@ -109,7 +109,7 @@ public class HubServer implements AutoCloseable {
         if (peer == null) {
             return;
         }
-        Utils.log("Peer state changed: " + state + " " + peer);
+        Logger.log("Peer state changed: %s %s", state, peer);
         peer.setState(state);
 
         if (peer.getRemotePeerManagerId() != null) {
@@ -139,26 +139,24 @@ public class HubServer implements AutoCloseable {
             out.write(Constants.NEW_LINE);
             out.flush();
         } catch (SocketException se) {
-            Utils.log("Exception while writing to socket for peer manager " + appInstance.getPeerManagerId() + " " + appInstance.getHostId() + " " + se.getMessage());
+            Logger.log("Exception while writing to socket for peer manager %s %s %s", appInstance.getPeerManagerId(), appInstance.getHostId(), se.getMessage());
             onPeerManagerDisconnects(appInstance);
         } catch (IOException ioe) {
-            Utils.log("Exception while writing to socket for peer manager " + appInstance.getPeerManagerId() + " " + appInstance.getHostId() + " " + ioe.getMessage());
+            Logger.log("Exception while writing to socket for peer manager %s %s %s", appInstance.getPeerManagerId(), appInstance.getHostId(), ioe.getMessage());
             ioe.printStackTrace();//todo
         }
     }
 
     private void runUdpPeerRegistrationThread() {
         new Thread(() -> {
-            String log = settings.getString(Settings.log);
             Integer bufSize = settings.getInt(Settings.packetBufferSize);
             while (true) {
                 byte[] buf = new byte[bufSize];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 try {
                     udpSocket.receive(packet);
-                    if (log != null) {
-                        Utils.logPacket(packet, false);
-                    }
+                    Logger.logPacket(packet, false);
+
                     Peer peer = getPeer(packet);
 
                     AppInstance appInstance = instances.get(peer.getPeerManagerId());
@@ -170,7 +168,7 @@ public class HubServer implements AutoCloseable {
                 } catch (SocketTimeoutException e) {
                     //ignore
                 } catch (SocketException e) {
-                    Utils.log("Udp peer registration socket closed");
+                    Logger.log("Udp peer registration socket closed");
                     e.printStackTrace();
                     return;
                 } catch (Exception e) {
@@ -182,7 +180,7 @@ public class HubServer implements AutoCloseable {
 
     private Peer getPeer(DatagramPacket packet) {
         String message = new String(packet.getData(), StandardCharsets.UTF_8).trim();
-        Utils.log("Hub " + this.id + " received peer: " + message);
+        Logger.log("Hub %s received peer: %s", this.id, message);
         Host host = new Host(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP);
         return Peer.of(message, host);
     }

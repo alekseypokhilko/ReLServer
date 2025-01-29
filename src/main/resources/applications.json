@@ -1,10 +1,5 @@
 [
   {
-    "id": "glnova3",
-    "port": 7891,
-    "title": "N.O.V.A 3"
-  },
-  {
     "id": "glmc2bp",
     "port": 7891,
     "title": "Modern Combat 2 Black Pegasus"
@@ -18,5 +13,10 @@
     "id": "glmc4zh",
     "port": 7897,
     "title": "Modern Combat 4 Zero Hour"
+  },
+  {
+    "id": "glnova3",
+    "port": 7891,
+    "title": "N.O.V.A 3"
   }
 ]

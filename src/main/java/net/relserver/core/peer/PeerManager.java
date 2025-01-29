@@ -7,6 +7,7 @@ import net.relserver.core.util.Logger;
 
 import java.io.*;
 import java.net.DatagramPacket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public class PeerManager implements Id {
         this.registrationServiceHost = registrationService;
 
         try {
-            serviceSocket = new Socket(service.getIp(), service.getPort());
+            serviceSocket = new Socket();
+            serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
         } catch (Exception ex) {
             throw new RuntimeException("Error creating socket: " + ex.getMessage(), ex);
         }

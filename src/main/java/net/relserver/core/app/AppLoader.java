@@ -2,10 +2,9 @@ package net.relserver.core.app;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.relserver.core.Constants;
 import net.relserver.core.util.Logger;
 import net.relserver.core.http.APIClient;
-import net.relserver.core.http.ServerApi;
+import net.relserver.core.http.ConfigApi;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -14,19 +13,14 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class AppLoader {
-    private static final Type APP_LIST_TYPE = new TypeToken<CopyOnWriteArrayList<App>>() {
+    private static final Type APP_LIST_TYPE = new TypeToken<List<App>>() {
     }.getType();
 
     public static List<App> loadFromRemoteRepository() {
         try {
-            var api = APIClient.getClient(Constants.GITHUB_BASE_URL)
-                    .create(ServerApi.class);
-            String response = api.applications()
-                    .execute()
-                    .body();
+            String response = APIClient.fetchConfig(ConfigApi::applications);
             return new Gson().fromJson(response, APP_LIST_TYPE);
         } catch (Exception e) {
             Logger.log("Cannot read applications.json file from remote: %s", e.getMessage());

@@ -23,8 +23,10 @@ Download a jar file from the Releases tab and run in terminal:
 ```bash
 java -jar relserver.jar -mode=client -appId=appIdFromCatalog
 #or
-#localServerIp - address of the real server in the local network
-java -jar relserver.jar -mode=server -appId=appIdFromCatalog -localServerIp=192.168.0.123
+#-localServerIp=192.168.0.123 - address of the real server in the local network
+java -jar relserver.jar -mode=server -appId=appIdFromCatalog
+#or
+java -jar relserver.jar -mode=hub
 ```
 
 ### Android

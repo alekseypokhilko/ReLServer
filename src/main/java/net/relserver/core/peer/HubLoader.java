@@ -2,9 +2,8 @@ package net.relserver.core.peer;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.relserver.core.Constants;
 import net.relserver.core.http.APIClient;
-import net.relserver.core.http.ServerApi;
+import net.relserver.core.http.ConfigApi;
 import net.relserver.core.util.Logger;
 
 import java.io.BufferedReader;
@@ -20,11 +19,7 @@ public class HubLoader {
     }.getType();
     public static List<String> loadFromRemoteRepository() {
         try {
-            var api = APIClient.getClient(Constants.GITHUB_BASE_URL)
-                    .create(ServerApi.class);
-            String response = api.hubs()
-                    .execute()
-                    .body();
+            String response = APIClient.fetchConfig(ConfigApi::hubs);
             return new Gson().fromJson(response, HUBS_TYPE);
         } catch (Exception e) {
             Logger.log("Cannot load hub hosts file from remote: %s", e.getMessage());

@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HubServer implements AutoCloseable {
+public class HubServer {
     private final String id;
     private final Settings settings;
     private final DatagramSocket udpSocket;
@@ -139,6 +139,7 @@ public class HubServer implements AutoCloseable {
             out.write(Utils.toJson(peer).getBytes(StandardCharsets.UTF_8));
             out.write(Constants.NEW_LINE);
             out.flush();
+            Logger.log("Writing for %s to socket: %s", appInstance.getPeerManagerId(), peer);
         } catch (SocketException se) {
             Logger.log("Exception while writing to socket for peer manager %s %s %s", appInstance.getPeerManagerId(), appInstance.getHostId(), se.getMessage());
             onPeerManagerDisconnects(appInstance);
@@ -188,8 +189,7 @@ public class HubServer implements AutoCloseable {
         return peer;
     }
 
-    @Override
-    public void close() throws IOException {
+    public void stop() throws IOException {
         serverSocket.close();
         udpSocket.close();
     }

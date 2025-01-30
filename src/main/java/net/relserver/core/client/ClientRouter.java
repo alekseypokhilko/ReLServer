@@ -85,7 +85,7 @@ public class ClientRouter implements Proxy {
             ClientProxy proxy = proxyIterator.next().getValue();
             if (proxy.getRemotePeer().getPeerManagerId().equals(peer.getPeerManagerId())) {
                 proxies.remove(proxy.getId());
-                proxy.close();
+                proxy.stop();
 
                 for (Map.Entry<String, Set<String>> clientProxies : clientProxyIds.entrySet()) {
                     clientProxies.getValue().remove(proxy.getId());
@@ -182,11 +182,11 @@ public class ClientRouter implements Proxy {
     }
 
     @Override
-    public void close() {
+    public void stop() {
         for (Map.Entry<String, ClientProxy> proxy : proxies.entrySet()) {
             ClientProxy clientProxy = proxy.getValue();
             peerManager.notifyPeerState(clientProxy, State.DISCONNECTED);
-            clientProxy.close();
+            clientProxy.stop();
         }
         peerManager.notifyPeerState(this, State.DISCONNECTED);
         portPair.getP2pPort().close();

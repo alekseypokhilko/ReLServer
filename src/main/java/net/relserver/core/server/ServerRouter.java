@@ -106,7 +106,7 @@ public class ServerRouter implements Proxy {
             ServerProxy proxy = proxyIterator.next().getValue();
             if (proxy.getRemotePeer().getPeerManagerId().equals(peer.getPeerManagerId())) {
                 proxies.remove(proxy.getId());
-                proxy.close();
+                proxy.stop();
             }
         }
     }
@@ -132,11 +132,11 @@ public class ServerRouter implements Proxy {
     }
 
     @Override
-    public void close() {
+    public void stop() {
         for (Map.Entry<String, ServerProxy> proxy : proxies.entrySet()) {
             ServerProxy serverProxy = proxy.getValue();
             peerManager.notifyPeerState(serverProxy, State.DISCONNECTED);
-            serverProxy.close();
+            serverProxy.stop();
         }
         peerManager.notifyPeerState(this, State.DISCONNECTED);
         p2pPort.close();

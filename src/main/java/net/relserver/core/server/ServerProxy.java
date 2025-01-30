@@ -77,7 +77,7 @@ public class ServerProxy implements Proxy {
     }
 
     @Override
-    public void close() {
+    public void stop() {
         portPair.getTargetPort().close();
         portPair.getP2pPort().close();
     }

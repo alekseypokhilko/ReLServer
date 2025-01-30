@@ -44,7 +44,7 @@ public class PeerManager implements Id {
             throw new RuntimeException(String.format("Error creating socket %s:%s %s", service.getIp(), service.getPort(), ex.getMessage()), ex);
         }
 
-        runPeerInfosReceiverThread();
+        Logger.log("Peer manager %s started with mode=%s app=%s", id, settings.getString(Settings.mode), app);
     }
 
     private static List<String> getHubIps(Settings settings) {
@@ -66,7 +66,7 @@ public class PeerManager implements Id {
         }
     }
 
-    private void runPeerInfosReceiverThread() {
+    public void start() {
         new Thread(() -> {
             try {
                 BufferedOutputStream out = new BufferedOutputStream(serviceSocket.getOutputStream());
@@ -132,7 +132,7 @@ public class PeerManager implements Id {
         return id;
     }
 
-    public void close() {
+    public void stop() {
         try {
             serviceSocket.close();
         } catch (Exception e) {

@@ -14,8 +14,6 @@ import net.relserver.core.util.Logger;
 
 import java.io.IOException;
 
-//todo remove disconnected peers
-//todo synchronize collection access
 //todo exception handling
 //todo fix thread busy waiting
 public class ReLServer {
@@ -48,20 +46,22 @@ public class ReLServer {
         } else if (Mode.SERVER == mode) {
             server = new ServerRouter(portFactory, peerFactory, settings.getLocalServerIp(), peerManager);
         }
+
+        peerManager.start();
     }
 
     public void stop() throws IOException {
         if (hub != null) {
-            hub.close();
+            hub.stop();
         }
         if (client != null) {
-            client.close();
+            client.stop();
         }
         if (server != null) {
-            server.close();
+            server.stop();
         }
         if (peerManager != null) {
-            peerManager.close();
+            peerManager.stop();
         }
     }
 }

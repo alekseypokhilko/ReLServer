@@ -33,5 +33,5 @@ public interface Proxy extends Id {
         return getInfo().getId();
     }
 
-    void close();
+    void stop();
 }

@@ -60,7 +60,7 @@ public class Settings {
     }
 
     private void init() {
-        params.put(mode, "CLIENT");
+        params.put(mode, "CLIENT_SERVER");
         params.put(localServerIp, "127.0.0.1");
 
         params.put(hubServicePort, "9000");

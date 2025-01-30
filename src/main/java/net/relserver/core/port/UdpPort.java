@@ -1,7 +1,8 @@
 package net.relserver.core.port;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Id;
+import net.relserver.core.api.Id;
+import net.relserver.core.api.Port;
 import net.relserver.core.util.Logger;
 import net.relserver.core.peer.Host;
 import net.relserver.core.Settings;

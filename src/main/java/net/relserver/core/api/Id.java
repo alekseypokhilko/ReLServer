@@ -1,4 +1,4 @@
-package net.relserver.core;
+package net.relserver.core.api;
 
 import java.util.UUID;
 

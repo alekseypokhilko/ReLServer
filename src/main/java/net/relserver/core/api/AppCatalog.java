@@ -1,4 +1,6 @@
-package net.relserver.core.app;
+package net.relserver.core.api;
+
+import net.relserver.core.app.App;
 
 import java.util.List;
 

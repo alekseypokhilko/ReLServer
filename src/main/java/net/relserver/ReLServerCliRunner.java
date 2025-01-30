@@ -1,6 +1,6 @@
 package net.relserver;
 
-import net.relserver.core.app.AppCatalog;
+import net.relserver.core.api.AppCatalog;
 import net.relserver.core.Settings;
 import net.relserver.core.app.DefaultAppCatalog;
 

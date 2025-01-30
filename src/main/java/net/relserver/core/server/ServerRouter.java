@@ -1,13 +1,12 @@
 package net.relserver.core.server;
 
 import com.google.gson.JsonSyntaxException;
-import net.relserver.core.Constants;
 import net.relserver.core.util.Logger;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.port.UdpPort;
-import net.relserver.core.proxy.Proxy;
+import net.relserver.core.api.Proxy;
 import net.relserver.core.util.Utils;
 
 import java.net.DatagramPacket;
@@ -45,7 +44,7 @@ public class ServerRouter implements Proxy {
         String peerInfo = new String(packet.getData(), StandardCharsets.UTF_8).trim();
         Logger.log("Router %s received create proxy request: '%s'", peer.getId(), peerInfo);
         try {
-            if (peerInfo.isEmpty() || peerInfo.startsWith(Constants.HANDSHAKE_MESSAGE_PREFIX)) {
+            if (peerInfo.isEmpty() || Utils.isHandshake(packet.getData())) {
                 return;
             }
 

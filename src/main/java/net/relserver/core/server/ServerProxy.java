@@ -5,7 +5,8 @@ import net.relserver.core.peer.Peer;
 import net.relserver.core.peer.PeerPair;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.port.UdpPort;
-import net.relserver.core.proxy.Proxy;
+import net.relserver.core.api.Proxy;
+import net.relserver.core.util.Utils;
 
 import java.net.DatagramPacket;
 import java.util.function.Function;
@@ -42,6 +43,9 @@ public class ServerProxy implements Proxy {
     }
 
     private void processRequest(DatagramPacket packet) {
+        if (Utils.isHandshake(packet.getData())) {
+            return;
+        }
         //from remote client -> local server
         portPair.getTargetPort().send(packet, this.peerPair.getPeer().getHost());
     }

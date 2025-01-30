@@ -1,6 +1,5 @@
-package net.relserver.core.port;
+package net.relserver.core.api;
 
-import net.relserver.core.Id;
 import net.relserver.core.peer.Host;
 
 import java.util.function.Consumer;

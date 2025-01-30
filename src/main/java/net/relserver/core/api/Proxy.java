@@ -1,7 +1,6 @@
-package net.relserver.core.proxy;
+package net.relserver.core.api;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Id;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 import net.relserver.core.port.UdpPort;

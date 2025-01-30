@@ -2,7 +2,7 @@ package net.relserver;
 
 import net.relserver.core.*;
 import net.relserver.core.app.App;
-import net.relserver.core.app.AppCatalog;
+import net.relserver.core.api.AppCatalog;
 import net.relserver.core.client.ClientRouter;
 import net.relserver.core.hub.HubServer;
 import net.relserver.core.peer.Mode;

@@ -1,7 +1,8 @@
 package net.relserver.core.util;
 
 import com.google.gson.Gson;
-import net.relserver.core.port.Port;
+import net.relserver.core.Constants;
+import net.relserver.core.api.Port;
 import net.relserver.core.peer.Peer;
 
 import java.net.DatagramPacket;
@@ -48,5 +49,12 @@ public final class Utils {
 
     public static <T> T fromJson(String str, Class<T> cls) {
         return new Gson().fromJson(str, cls);
+    }
+
+    public static boolean isHandshake(byte[] packetData) {
+        return packetData.length > 3
+                && packetData[0] == Constants.HANDSHAKE_PREFIX_BYTES[0]
+                && packetData[1] == Constants.HANDSHAKE_PREFIX_BYTES[1]
+                && packetData[2] == Constants.HANDSHAKE_PREFIX_BYTES[2];
     }
 }

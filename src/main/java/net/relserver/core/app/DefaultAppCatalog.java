@@ -1,5 +1,7 @@
 package net.relserver.core.app;
 
+import net.relserver.core.api.AppCatalog;
+
 import java.util.List;
 
 public class DefaultAppCatalog implements AppCatalog {

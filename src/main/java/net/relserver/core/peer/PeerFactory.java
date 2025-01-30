@@ -1,7 +1,7 @@
 package net.relserver.core.peer;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Id;
+import net.relserver.core.api.Id;
 import net.relserver.core.app.App;
 
 public class PeerFactory {

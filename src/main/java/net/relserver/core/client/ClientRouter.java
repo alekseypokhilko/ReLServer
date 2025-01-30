@@ -6,7 +6,7 @@ import net.relserver.core.peer.*;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.port.UdpPort;
-import net.relserver.core.proxy.Proxy;
+import net.relserver.core.api.Proxy;
 
 import java.net.DatagramPacket;
 import java.util.*;

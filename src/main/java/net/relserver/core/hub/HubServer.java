@@ -1,7 +1,7 @@
 package net.relserver.core.hub;
 
 import net.relserver.core.Constants;
-import net.relserver.core.Id;
+import net.relserver.core.api.Id;
 import net.relserver.core.util.Logger;
 import net.relserver.core.Settings;
 import net.relserver.core.peer.*;

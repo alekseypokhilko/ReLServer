@@ -1,27 +1,19 @@
 package net.relserver.core.peer;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public final class Host {
     private final String ip;
     private final int port;
     private final Protocol protocol;
-    private final InetAddress _inetAddress;
 
     public Host(String ip, int port, Protocol protocol) {
-        try {
-            this._inetAddress = InetAddress.getByName(ip); //todo lazy
-            this.ip = ip;
-            this.port = port;
-            this.protocol = protocol;
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+        this.ip = ip;
+        this.port = port;
+        this.protocol = protocol;
     }
 
     public Host(InetAddress ip, int port, Protocol protocol) {
-        this._inetAddress = ip;
         this.ip = ip.getHostAddress();
         this.port = port;
         this.protocol = protocol;

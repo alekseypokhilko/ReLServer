@@ -107,7 +107,9 @@ public class ClientRouter implements Proxy {
     private void sendToAllRemoteServers(DatagramPacket packet, Set<String> proxyIds) {
         for (String proxyId : proxyIds) {
             ClientProxy proxy = this.proxies.get(proxyId);
-            proxy.sendWithRetry(packet);
+            if (proxy != null) {
+                proxy.sendWithRetry(packet);
+            }
         }
     }
 
@@ -130,14 +132,13 @@ public class ClientRouter implements Proxy {
     }
 
     private void sendCreateProxyRequest(Host host, Peer proxyInfo) {
-        byte[] data = proxyInfo.toString().getBytes();
+        byte[] data = Utils.toJson(proxyInfo).getBytes();
         DatagramPacket createProxyRequest = new DatagramPacket(data, data.length);
         portPair.getP2pPort().send(createProxyRequest, host);
-        Utils.sendWithRetry(portPair.getP2pPort(), createProxyRequest, proxyInfo, 30, 100L, getPeerSupplier());
     }
 
     private void onP2pPacketReceived(DatagramPacket packet) {
-        Logger.logPacket(packet, false);
+        Logger.logPacket(portPair.getP2pPort().getId(), packet, false);
     }
 
     private ClientProxy createProxy(String clientHostPort, Peer remoteServer) {

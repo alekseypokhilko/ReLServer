@@ -39,9 +39,10 @@ public class PeerFactory {
         return new PeerPair(peer, remotePeer);
     }
 
-    public PeerPair serverPeerPair(String peerInfo, String localServerIp) {
-        //todo check app=this.app
-        Peer peerRequest = Peer.of(peerInfo);
+    public PeerPair serverPeerPair(String localServerIp, Peer peerRequest) {
+        if (!app.getId().equals(peerRequest.getAppId())) {
+            throw new IllegalArgumentException("Peer request have different appId");
+        }
 
         Host appHost = new Host(localServerIp, app.getPort(), Protocol.UDP);
         Peer peer = Peer.of(

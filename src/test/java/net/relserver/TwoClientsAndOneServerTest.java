@@ -13,8 +13,8 @@ public class TwoClientsAndOneServerTest {
         TestUtils.createClient("client2->", clientPort2);
 
         ReLServerCliRunner.main(new String[]{"-mode=hub"});
-        ReLServerCliRunner.main(new String[]{"-mode=client","-appPort=" + clientPort1});
-        ReLServerCliRunner.main(new String[]{"-mode=client","-appPort=" + clientPort2});
-        ReLServerCliRunner.main(new String[]{"-mode=server","-appPort=" + realServerPort});
+        ReLServerCliRunner.main(new String[]{"-mode=client", "-hubIp=127.0.0.1", "-appPort=" + clientPort1});
+        ReLServerCliRunner.main(new String[]{"-mode=client", "-hubIp=127.0.0.1", "-appPort=" + clientPort2});
+        ReLServerCliRunner.main(new String[]{"-mode=server", "-hubIp=127.0.0.1", "-appPort=" + realServerPort});
     }
 }

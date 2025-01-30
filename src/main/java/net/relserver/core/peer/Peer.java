@@ -47,12 +47,6 @@ public class Peer {
         );
     }
 
-    public static Peer of(String info, Host host) {
-        Peer peer = Peer.of(info);
-        peer.setHost(host);
-        return peer;
-    }
-
     public static Peer of(String peerManagerId, String id, State state, Mode mode, String remotePeerManagerId, String peerId, String appId, Host host) {
         return new Peer(peerManagerId, id, state, mode, remotePeerManagerId, peerId, appId, host);
     }

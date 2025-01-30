@@ -4,6 +4,7 @@ import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.proxy.Proxy;
 import net.relserver.core.util.Logger;
+import net.relserver.core.util.Utils;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -20,7 +21,7 @@ public class PeerManager implements Id {
     private final Socket serviceSocket;
     private final Host registrationServiceHost;
     private final App app;
-    private final List<Consumer<Peer>> onNewRemotePeerActions = new CopyOnWriteArrayList<>(); //todo deal with not actual handlers
+    private final List<Consumer<Peer>> onNewRemotePeerActions = new CopyOnWriteArrayList<>();
 
     public PeerManager(Settings settings, App app) {
         this.id = Id.generateId(Constants.PEER_MANAGER_PREFIX);
@@ -32,15 +33,14 @@ public class PeerManager implements Id {
         int hubServicePort = settings.getInt(Settings.hubServicePort);
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
         Host service = new Host(hubIp, hubServicePort, Protocol.TCP);
-        Host registrationService = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
         this.app = app;
-        this.registrationServiceHost = registrationService;
+        this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
 
         try {
             serviceSocket = new Socket();
             serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
         } catch (Exception ex) {
-            throw new RuntimeException("Error creating socket: " + ex.getMessage(), ex);
+            throw new RuntimeException(String.format("Error creating socket %s:%s %s", service.getIp(), service.getPort(), ex.getMessage()), ex);
         }
 
         runPeerInfosReceiverThread();
@@ -90,8 +90,8 @@ public class PeerManager implements Id {
             return;
         }
         try {
-            Peer peer = Peer.of(peerInfo);
-            if (!peer.getAppId().equals(app.getId())){
+            Peer peer = Utils.fromJson(peerInfo, Peer.class);
+            if (!peer.getAppId().equals(app.getId())) {
                 return;
             }
             notifyRemotePeerState(peer);
@@ -114,7 +114,8 @@ public class PeerManager implements Id {
     public void notifyPeerState(Proxy client, State state) {
         Peer peer = client.getInfo();
         peer.setState(state);
-        String message = peer.toString();
+        String message = Utils.toJson(peer);
+
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length);
         client.getPort().send(packet, this.registrationServiceHost);
@@ -122,9 +123,7 @@ public class PeerManager implements Id {
     }
 
     public void subscribeOnRemotePeerChanged(Consumer<Peer> action) {
-        synchronized (onNewRemotePeerActions) {
-            this.onNewRemotePeerActions.add(action); //todo remove
-        }
+        this.onNewRemotePeerActions.add(action);
     }
 
     @Override

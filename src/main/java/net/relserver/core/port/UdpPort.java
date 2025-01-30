@@ -45,7 +45,7 @@ public class UdpPort implements Port<DatagramPacket> {
                         return;
                     }
                     udpSocket.receive(packet);
-                    Logger.logPacket(packet, false);
+                    Logger.logPacket(id, packet, false);
                     if (this.onPacketReceived != null) {
                         this.onPacketReceived.accept(packet);
                     }
@@ -66,7 +66,7 @@ public class UdpPort implements Port<DatagramPacket> {
         }
         try {
             DatagramPacket p = new DatagramPacket(packet.getData(), packet.getLength(), InetAddress.getByName(host.getIp()), host.getPort());
-            Logger.logPacket(p, true);
+            Logger.logPacket(id, p, true);
             udpSocket.send(p);
         } catch (SocketTimeoutException | SocketException ignore) {
             //ignore

@@ -5,6 +5,7 @@ import net.relserver.core.Id;
 import net.relserver.core.util.Logger;
 import net.relserver.core.Settings;
 import net.relserver.core.peer.*;
+import net.relserver.core.util.Utils;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -135,7 +136,7 @@ public class HubServer implements AutoCloseable {
         }
         try {
             BufferedOutputStream out = new BufferedOutputStream(appInstance.getSocket().getOutputStream());
-            out.write(peer.toString().getBytes(StandardCharsets.UTF_8));
+            out.write(Utils.toJson(peer).getBytes(StandardCharsets.UTF_8));
             out.write(Constants.NEW_LINE);
             out.flush();
         } catch (SocketException se) {
@@ -155,7 +156,7 @@ public class HubServer implements AutoCloseable {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 try {
                     udpSocket.receive(packet);
-                    Logger.logPacket(packet, false);
+                    Logger.logPacket(id, packet, false);
 
                     Peer peer = getPeer(packet);
 
@@ -182,7 +183,9 @@ public class HubServer implements AutoCloseable {
         String message = new String(packet.getData(), StandardCharsets.UTF_8).trim();
         Logger.log("Hub %s received peer: %s", this.id, message);
         Host host = new Host(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP);
-        return Peer.of(message, host);
+        Peer peer = Utils.fromJson(message, Peer.class);
+        peer.setHost(host);
+        return peer;
     }
 
     @Override

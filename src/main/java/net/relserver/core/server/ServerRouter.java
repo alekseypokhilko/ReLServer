@@ -1,5 +1,6 @@
 package net.relserver.core.server;
 
+import com.google.gson.JsonSyntaxException;
 import net.relserver.core.Constants;
 import net.relserver.core.util.Logger;
 import net.relserver.core.peer.*;
@@ -7,6 +8,7 @@ import net.relserver.core.port.PortFactory;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.proxy.Proxy;
+import net.relserver.core.util.Utils;
 
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
@@ -46,20 +48,26 @@ public class ServerRouter implements Proxy {
             if (peerInfo.isEmpty() || peerInfo.startsWith(Constants.HANDSHAKE_MESSAGE_PREFIX)) {
                 return;
             }
-            ServerProxy proxy = this.proxies.get(peer.getId());
-            if (proxy == null) {
-                PeerPair peers = peerFactory.serverPeerPair(peerInfo, localServerIp);
-                PortPair portPair = portFactory.pair();
-                ServerProxy serverProxy = new ServerProxy(portPair, peers, clients::get);
-                this.proxies.put(serverProxy.getId(), serverProxy);
 
-                peerManager.notifyPeerState(serverProxy, State.CONNECTED);
+            Peer peerRequest = Utils.fromJson(peerInfo, Peer.class);
+            if (Mode.SERVER != peerRequest.getMode() && this.proxies.get(peerRequest.getId()) != null) {
+                return;
             }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            Logger.log("Illegal peer request: '%s'", peerInfo);
+
+            createProxy(peerRequest);
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException | JsonSyntaxException e) {
+            Logger.log("Illegal peer request: '%s' %s", peerInfo, e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace(); //todo
+            Logger.log("Exception while processing peer request: '%s' %s", peerInfo, e.getMessage());
         }
+    }
+
+    private void createProxy(Peer peerRequest) {
+        PeerPair peers = peerFactory.serverPeerPair(localServerIp, peerRequest);
+        PortPair portPair = portFactory.pair();
+        ServerProxy serverProxy = new ServerProxy(portPair, peers, clients::get);
+        this.proxies.put(serverProxy.getId(), serverProxy);
+        peerManager.notifyPeerState(serverProxy, State.CONNECTED);
     }
 
     private void onPeerChanged(Peer peer) {
@@ -81,7 +89,7 @@ public class ServerRouter implements Proxy {
                 sendHandshakePacket(peer);
             }
         } catch (Exception e) {
-            e.printStackTrace(); //todo
+            Logger.log("Exception while processing peer state: '%s' %s", peer, e.getMessage());
         }
     }
 

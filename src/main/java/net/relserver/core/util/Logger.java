@@ -15,9 +15,9 @@ public class Logger {
         }
     }
 
-    public static void logPacket(DatagramPacket receivePacket, boolean send) {
+    public static void logPacket(String portId, DatagramPacket receivePacket, boolean send) {
         if (LOG_PACKET) {
-            log("%s%s:%d '%s'", send ? "<= Sending  to " : "=> Received from ", receivePacket.getAddress().getHostAddress().trim(), receivePacket.getPort(), new String(receivePacket.getData()).trim());
+            log("%s %s%s:%d '%s'",portId, send ? "sending  to   => " : "received from <= ", receivePacket.getAddress().getHostAddress().trim(), receivePacket.getPort(), new String(receivePacket.getData()).trim());
         }
     }
 

@@ -70,7 +70,7 @@ public class Settings {
         params.put(udpRegistrationPacketCount, "1");
         params.put(udpRegistrationPacketDelay, "100");
         params.put(peerPollIntervalMs, "1000");
-        params.put(packetBufferSize, "8192");
+        params.put(packetBufferSize, "1024");
     }
 
     public Mode getMode() {

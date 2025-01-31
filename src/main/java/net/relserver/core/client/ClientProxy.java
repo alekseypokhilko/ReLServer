@@ -40,21 +40,18 @@ public class ClientProxy implements Proxy {
         portPair.getTargetPort().send(packet, this.peerPair.getPeer().getHost());
     }
 
-    private void processRequest(DatagramPacket packet) {
+    public void processRequest(DatagramPacket packet) {
         if (peerPair.getPeer().getHost() == null) {
             peerPair.getPeer().setHost(new Host(packet.getAddress(), packet.getPort(), Protocol.UDP));
         }
 
         Peer remotePeer = peerPair.getRemotePeer();
         if (remotePeer.getHost() == null) {
-            Peer clientPeer = peerSupplier.apply(remotePeer.getId());
-            if (clientPeer != null && clientPeer.getHost() != null) {
-                remotePeer.setHost(clientPeer.getHost());
-                Logger.log("Cannot get host for peer: %s", remotePeer);
-            }
+            sendWithRetry(packet);
+        } else {
+            //from local client -> real remote server
+            portPair.getP2pPort().send(packet, remotePeer.getHost());
         }
-        //from local client -> real remote server
-        portPair.getP2pPort().send(packet, remotePeer.getHost());
     }
 
     public void sendWithRetry(DatagramPacket packet) {

@@ -75,7 +75,6 @@ public class ServerRouter implements Proxy {
                 return;
             }
 
-            Logger.log("Server %s received peer: %s", getId(), peer);
             if (State.DISCONNECTED == peer.getState()) {
                 onPeerDisconnected(peer);
                 return;

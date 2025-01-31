@@ -52,7 +52,6 @@ public class ClientRouter implements Proxy {
                 return;
             }
 
-            Logger.log("Client %s received peer: %s", getId(), peer);
             if (State.DISCONNECTED == peer.getState()) {
                 disconnectFromPeer(peer);
                 return;
@@ -108,7 +107,7 @@ public class ClientRouter implements Proxy {
         for (String proxyId : proxyIds) {
             ClientProxy proxy = this.proxies.get(proxyId);
             if (proxy != null) {
-                proxy.sendWithRetry(packet);
+                proxy.processRequest(packet);
             }
         }
     }
@@ -131,10 +130,10 @@ public class ClientRouter implements Proxy {
         }
     }
 
-    private void sendCreateProxyRequest(Host host, Peer proxyInfo) {
+    private void sendCreateProxyRequest(Peer remoteRouterPeer, Peer proxyInfo) {
         byte[] data = Utils.toJson(proxyInfo).getBytes();
         DatagramPacket createProxyRequest = new DatagramPacket(data, data.length);
-        portPair.getP2pPort().send(createProxyRequest, host);
+        portPair.getP2pPort().send(createProxyRequest, remoteRouterPeer.getHost());
     }
 
     private void onP2pPacketReceived(DatagramPacket packet) {
@@ -149,7 +148,7 @@ public class ClientRouter implements Proxy {
         this.peerManager.notifyPeerState(clientProxy, State.CONNECTED);
         this.clientProxyIds.get(clientHostPort).add(clientProxy.getInfo().getId());
 
-        sendCreateProxyRequest(remoteServer.getHost(), clientProxy.getRemotePeer());
+        sendCreateProxyRequest(remoteServer, clientProxy.getRemotePeer());
         return clientProxy;
     }
 

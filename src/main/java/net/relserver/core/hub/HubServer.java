@@ -73,12 +73,8 @@ public class HubServer {
 
     private void sendPeers(AppInstance instance) {
         for (AppInstance pmi : instances.values()) {
-            try {
-                writeToSocket(instance, pmi.getClientRouter());
-                writeToSocket(instance, pmi.getServerRouter());
-            } catch (Exception e) {
-                e.printStackTrace(); //todo
-            }
+            writeToSocket(instance, pmi.getClientRouter());
+            writeToSocket(instance, pmi.getServerRouter());
         }
     }
 
@@ -135,11 +131,11 @@ public class HubServer {
             return;
         }
         try {
+            Logger.log("Writing for %s to socket: %s", appInstance.getPeerManagerId(), peer);
             BufferedOutputStream out = new BufferedOutputStream(appInstance.getSocket().getOutputStream());
             out.write(Utils.toJson(peer).getBytes(StandardCharsets.UTF_8));
             out.write(Constants.NEW_LINE);
             out.flush();
-            Logger.log("Writing for %s to socket: %s", appInstance.getPeerManagerId(), peer);
         } catch (SocketException se) {
             Logger.log("Exception while writing to socket for peer manager %s %s %s", appInstance.getPeerManagerId(), appInstance.getHostId(), se.getMessage());
             onPeerManagerDisconnects(appInstance);

@@ -1,5 +1,7 @@
 package net.relserver;
 
+import net.relserver.util.TestUtils;
+
 public class OneClientAndTwoServerTest {
 
     public static void main(String[] args) {

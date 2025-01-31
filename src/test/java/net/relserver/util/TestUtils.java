@@ -1,4 +1,4 @@
-package net.relserver;
+package net.relserver.util;
 
 import net.relserver.core.Constants;
 import net.relserver.core.port.UdpPort;

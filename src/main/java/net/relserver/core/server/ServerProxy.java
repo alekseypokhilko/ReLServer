@@ -32,14 +32,11 @@ public class ServerProxy implements Proxy {
     private void processResponse(DatagramPacket packet) {
         //from local server -> remote client
         Peer remotePeer = this.peerPair.getRemotePeer();
-        if (remotePeer.getHost() == null){
-            Peer clientPeer = peerSupplier.apply(remotePeer.getId());
-            if (clientPeer != null && clientPeer.getHost() != null) {
-                remotePeer.setHost(clientPeer.getHost());
-                Logger.log("Cannot get host for peer: %s", remotePeer);
-            }
+        if (remotePeer.getHost() == null) {
+            Utils.sendWithRetry(portPair.getP2pPort(), packet, peerPair.getRemotePeer(), 10, 100L, peerSupplier);
+        } else {
+            portPair.getP2pPort().send(packet, remotePeer.getHost());
         }
-        portPair.getP2pPort().send(packet, remotePeer.getHost());
     }
 
     private void processRequest(DatagramPacket packet) {

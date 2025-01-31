@@ -1,5 +1,7 @@
 package net.relserver;
 
+import net.relserver.util.TestUtils;
+
 public class ManyClientsAndManyServersTest {
     private static final int SERVER_COUNT = 20;
     private static final int CLIENT_COUNT = 20;
@@ -19,5 +21,7 @@ public class ManyClientsAndManyServersTest {
         for (int i = 0; i < CLIENT_COUNT; i++) {
             TestUtils.createClient("client" + i, clientPort);
         }
+
+        //todo fix floating successful test messages
     }
 }

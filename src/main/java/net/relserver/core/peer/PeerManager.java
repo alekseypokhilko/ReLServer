@@ -4,6 +4,7 @@ import net.relserver.core.*;
 import net.relserver.core.api.Id;
 import net.relserver.core.app.App;
 import net.relserver.core.api.Proxy;
+import net.relserver.core.hub.HubLoader;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 
@@ -13,38 +14,38 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class PeerManager implements Id {
     private final String id;
-    private final Socket serviceSocket;
+    private Socket serviceSocket;
+    private final Host service;
     private final Host registrationServiceHost;
     private final App app;
     private final List<Consumer<Peer>> onNewRemotePeerActions = new CopyOnWriteArrayList<>();
+    private final Map<String, Peer> pm = new HashMap<>();
 
     public PeerManager(Settings settings, App app) {
         this.id = Id.generateId(Constants.PEER_MANAGER_PREFIX);
+        this.app = app;
+
         List<String> hubIps = getHubIps(settings);
         if (hubIps.isEmpty()) {
             throw new IllegalArgumentException("Cannot find Hub to connect");
         }
+
         String hubIp = hubIps.get(0);
         int hubServicePort = settings.getInt(Settings.hubServicePort);
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
-        Host service = new Host(hubIp, hubServicePort, Protocol.TCP);
-        this.app = app;
+        this.service = new Host(hubIp, hubServicePort, Protocol.TCP);
         this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
 
-        try {
-            serviceSocket = new Socket();
-            serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
-        } catch (Exception ex) {
-            throw new RuntimeException(String.format("Error creating socket %s:%s %s", service.getIp(), service.getPort(), ex.getMessage()), ex);
-        }
-
-        Logger.log("Peer manager %s started with mode=%s app=%s", id, settings.getString(Settings.mode), app);
+        Peer registrationHost = new Peer(id, id, null, null, null, null, app.getId(), registrationServiceHost);
+        pm.put(registrationHost.getId(), registrationHost);
     }
 
     private static List<String> getHubIps(Settings settings) {
@@ -69,6 +70,9 @@ public class PeerManager implements Id {
     public void start() {
         new Thread(() -> {
             try {
+                serviceSocket = new Socket();
+                serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
+
                 BufferedOutputStream out = new BufferedOutputStream(serviceSocket.getOutputStream());
                 String message = this.id + Constants.SEPARATOR + app.getId();
                 out.write(message.getBytes(StandardCharsets.UTF_8));
@@ -78,12 +82,14 @@ public class PeerManager implements Id {
                 BufferedReader in = new BufferedReader(new InputStreamReader(serviceSocket.getInputStream()));
                 while (true) {
                     String peerInfo = in.readLine();
+                    Logger.log("Peer manager %s received peer: %s", id, peerInfo);
                     receiveRemotePeer(peerInfo);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Logger.log("Disconnected from Hub: %s", e.getMessage());
             }
         }, "peerInfoReceiver-" + this.id).start();
+        Logger.log("Peer manager %s started with app=%s", id, app);
     }
 
     private void receiveRemotePeer(String peerInfo) {
@@ -134,7 +140,9 @@ public class PeerManager implements Id {
 
     public void stop() {
         try {
-            serviceSocket.close();
+            if (serviceSocket != null) {
+                serviceSocket.close();
+            }
         } catch (Exception e) {
             Logger.log("Exception while closing service socket: %s", e.getMessage());
         }

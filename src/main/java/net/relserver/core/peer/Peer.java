@@ -1,9 +1,5 @@
 package net.relserver.core.peer;
 
-import net.relserver.core.util.Utils;
-
-import java.util.Locale;
-
 import static net.relserver.core.Constants.SEPARATOR;
 
 public class Peer {
@@ -32,20 +28,6 @@ public class Peer {
      */
     private final String appId;
     private Host host;
-
-    public static Peer of(String fullInfo) {
-        String[] fields = fullInfo.split(SEPARATOR);
-        return new Peer(
-                Utils.valueOrElseNull(fields[0]),
-                Utils.valueOrElseNull(fields[1]),
-                State.valueOf(fields[2].toUpperCase(Locale.ENGLISH)),
-                Mode.valueOf(fields[3].toUpperCase(Locale.ENGLISH)),
-                Utils.valueOrElseNull(fields[4]),
-                Utils.valueOrElseNull(fields[5]),
-                Utils.valueOrElseNull(fields[6]),
-                fullInfo.endsWith(NULL_HOST) ? null : new Host(fields[8], Integer.parseInt(fields[9]), Protocol.valueOf(fields[7]))
-        );
-    }
 
     public static Peer of(String peerManagerId, String id, State state, Mode mode, String remotePeerManagerId, String peerId, String appId, Host host) {
         return new Peer(peerManagerId, id, state, mode, remotePeerManagerId, peerId, appId, host);

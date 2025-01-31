@@ -13,12 +13,14 @@ public class PeerFactory {
         this.peerManager = peerManager;
     }
 
-    public Peer clientRouterPeer() {
-        return Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.CLIENT, null, null, app.getId(), null);
+    public PeerPair clientRouterPeer() {
+        Peer peer = Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.CLIENT, null, null, app.getId(), null);
+        return new PeerPair(peer, null);
     }
 
-    public Peer serverRouterPeer() {
-        return Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.SERVER, null, null, app.getId(), null);
+    public PeerPair serverRouterPeer() {
+        Peer peer = Peer.of(peerManager.getId(), Id.generateId(Constants.ROUTER_PREFIX), State.CONNECTED, Mode.SERVER, null, null, app.getId(), null);
+        return new PeerPair(peer, null);
     }
 
     public PeerPair createClientPeerPair(Peer remoteServer) {

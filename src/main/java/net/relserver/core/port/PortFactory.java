@@ -18,17 +18,20 @@ public class PortFactory {
         return new PortPair(new UdpPort(null, settings), new UdpPort(null, settings));
     }
 
-    public PortPair clientRouterPair(Consumer<DatagramPacket> onP2pPacketReceived, Consumer<DatagramPacket> onTargetPacketReceived) {
-        UdpPort p2pPort = new UdpPort(null, settings);
-        p2pPort.setOnPacketReceived(onP2pPacketReceived);
-        UdpPort targetPort = new UdpPort(app.getPort(), settings);
-        targetPort.setOnPacketReceived(onTargetPacketReceived);
+    public PortPair clientRouterPair() {
+        UdpPort p2pPort = udpPort(null, null);
+        UdpPort targetPort = udpPort(app.getPort(), null);
         return new PortPair(p2pPort, targetPort);
     }
 
-    public UdpPort udpPort(Consumer<DatagramPacket> onPacketReceived) {
-        UdpPort port = new UdpPort(null, settings);
-        port.setOnPacketReceived(onPacketReceived);
-        return port;
+    public PortPair serverRouterPair() {
+        UdpPort p2pPort = udpPort(null, null);
+        return new PortPair(p2pPort, null);
+    }
+
+    public UdpPort udpPort(Integer port, Consumer<DatagramPacket> onPacketReceived) {
+        UdpPort udpPort = new UdpPort(port, settings);
+        udpPort.setOnPacketReceived(onPacketReceived);
+        return udpPort;
     }
 }

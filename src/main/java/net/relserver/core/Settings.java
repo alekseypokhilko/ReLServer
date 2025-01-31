@@ -22,7 +22,7 @@ public class Settings {
     public static final String peerPollIntervalMs = "peerpollintervalMs";
     public static final String packetBufferSize = "packetbuffersize";
     public static final String log = "log";
-    public static final String logPacket = "logPacket";
+    public static final String logPacket = "logpacket";
     private static final Set<String> KEYS = Set.of(
             mode, hubIp, hubServicePort, hubRegistrationPort, localServerIp, appPort, appId,
             socketTimeout, udpRegistrationPacketCount, peerPollIntervalMs, packetBufferSize,

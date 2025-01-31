@@ -6,7 +6,7 @@ public interface Id {
     String getId();
 
     static String generateId(String prefix) {
-        String id = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String id = UUID.randomUUID().toString().replace("-", "").substring(0, 10);
         return String.format("%s-%s", prefix == null ? "" : prefix, id);
     }
 }

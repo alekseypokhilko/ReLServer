@@ -17,6 +17,7 @@ public final class Utils {
     public static void sendWithRetry(Port<DatagramPacket> port, DatagramPacket packet, Peer peer, int retry, long delay, Function<String, Peer> peerSupplier) {
         new Thread(() -> {
             int count = 0;
+            //String message = new String(packet.getData()).trim(); //debug
             while (true) {
                 //packets can reach their destination after receiving information about the remote proxy
                 Peer actual = peerSupplier.apply(peer.getId());
@@ -37,10 +38,6 @@ public final class Utils {
                 }
             }
         }, "sendWithRetry-" + System.currentTimeMillis()).start();
-    }
-
-    public static String valueOrElseNull(String value) {
-        return "null".equals(value) ? null : value;
     }
 
     public static String toJson(Object o) {

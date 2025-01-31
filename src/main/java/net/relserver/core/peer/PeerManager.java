@@ -14,23 +14,19 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 public class PeerManager implements Id {
     private final String id;
     private Socket serviceSocket;
+    private final PeerRegistry peerRegistry;
     private final Host service;
     private final Host registrationServiceHost;
     private final App app;
-    private final List<Consumer<Peer>> onNewRemotePeerActions = new CopyOnWriteArrayList<>();
-    private final Map<String, Peer> pm = new HashMap<>();
 
-    public PeerManager(Settings settings, App app) {
+    public PeerManager(Settings settings, App app, PeerRegistry peerRegistry) {
         this.id = Id.generateId(Constants.PEER_MANAGER_PREFIX);
+        this.peerRegistry = peerRegistry;
         this.app = app;
 
         List<String> hubIps = getHubIps(settings);
@@ -43,9 +39,6 @@ public class PeerManager implements Id {
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
         this.service = new Host(hubIp, hubServicePort, Protocol.TCP);
         this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
-
-        Peer registrationHost = new Peer(id, id, null, null, null, null, app.getId(), registrationServiceHost);
-        pm.put(registrationHost.getId(), registrationHost);
     }
 
     private static List<String> getHubIps(Settings settings) {
@@ -86,7 +79,7 @@ public class PeerManager implements Id {
                     receiveRemotePeer(peerInfo);
                 }
             } catch (Exception e) {
-                Logger.log("Disconnected from Hub: %s", e.getMessage());
+                Logger.log("Disconnected from Hub: %s", e.getMessage()); //todo throw from main thread
             }
         }, "peerInfoReceiver-" + this.id).start();
         Logger.log("Peer manager %s started with app=%s", id, app);
@@ -98,39 +91,21 @@ public class PeerManager implements Id {
         }
         try {
             Peer peer = Utils.fromJson(peerInfo, Peer.class);
-            if (!peer.getAppId().equals(app.getId())) {
-                return;
-            }
-            notifyRemotePeerState(peer);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            //todo Cannot invoke "String.startsWith(String)" because "peerInfo" is null
+            peerRegistry.onPeerChanged(peer);
         } catch (Exception e) {
             e.printStackTrace();//todo
         }
     }
 
-    private void notifyRemotePeerState(Peer peer) {
-        new Thread(() -> {
-            for (Consumer<Peer> action : onNewRemotePeerActions) {
-                action.accept(peer);  //todo run on scheduler?
-            }
-        }, "notifyRemotePeerState-" + System.currentTimeMillis()).start();
-    }
-
-    public void notifyPeerState(Proxy client, State state) {
-        Peer peer = client.getInfo();
+    public void notifyPeerState(Proxy proxy, State state) {
+        Peer peer = proxy.getPeerPair().getPeer();
         peer.setState(state);
         String message = Utils.toJson(peer);
 
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length);
-        client.getPort().send(packet, this.registrationServiceHost);
+        proxy.getPortPair().getP2pPort().send(packet, this.registrationServiceHost);
         Logger.log("Registered on hub: %s", message);
-    }
-
-    public void subscribeOnRemotePeerChanged(Consumer<Peer> action) {
-        this.onNewRemotePeerActions.add(action);
     }
 
     @Override

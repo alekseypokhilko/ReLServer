@@ -3,13 +3,11 @@ package net.relserver;
 import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.api.AppCatalog;
-import net.relserver.core.client.ClientRouter;
+import net.relserver.core.peer.*;
+import net.relserver.core.port.PortPair;
+import net.relserver.core.proxy.*;
 import net.relserver.core.hub.HubServer;
-import net.relserver.core.peer.Mode;
-import net.relserver.core.peer.PeerFactory;
-import net.relserver.core.peer.PeerManager;
 import net.relserver.core.port.PortFactory;
-import net.relserver.core.server.ServerRouter;
 import net.relserver.core.util.Logger;
 
 import java.io.IOException;
@@ -17,11 +15,18 @@ import java.io.IOException;
 //todo exception handling
 //todo fix thread busy waiting
 public class ReLServer {
+    private App app;
+    private PeerRegistry peerRegistry;
+    private ProxyRegistry proxyRegistry;
+    private PeerManager peerManager;
+    private PeerFactory peerFactory;
+    private PortFactory portFactory;
+    private ProxyFactory proxyFactory;
+
 
     private HubServer hub;
     private ClientRouter client;
     private ServerRouter server;
-    private PeerManager peerManager;
 
     public ReLServer(Settings settings, AppCatalog appCatalog) {
         Logger.init(settings);
@@ -32,22 +37,44 @@ public class ReLServer {
             return;
         }
 
-        App app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
+        this.app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
         Logger.log("Selected app: %s", app);
-        peerManager = new PeerManager(settings, app);
-        PeerFactory peerFactory = new PeerFactory(app, peerManager);
-        PortFactory portFactory = new PortFactory(app, settings);
+
+        peerRegistry = new PeerRegistry(app);
+        peerManager = new PeerManager(settings, app, peerRegistry);
+        proxyRegistry = new ProxyRegistry(peerManager);
+        peerRegistry.subscribeOnRemotePeerChanged(proxyRegistry::updateProxyRemotePeer);
+        peerFactory = new PeerFactory(app, peerManager);
+        portFactory = new PortFactory(app, settings);
+        proxyFactory = new ProxyFactory(portFactory, peerFactory, settings.getLocalServerIp(), peerRegistry, proxyRegistry);
+
 
         if (Mode.CLIENT_SERVER == mode) {
-            client = new ClientRouter(portFactory, peerFactory, peerManager);
-            server = new ServerRouter(portFactory, peerFactory, settings.getLocalServerIp(), peerManager);
+            createClient();
+            createServer();
         } else if (Mode.CLIENT == mode) {
-            client = new ClientRouter(portFactory, peerFactory, peerManager);
+            createClient();
         } else if (Mode.SERVER == mode) {
-            server = new ServerRouter(portFactory, peerFactory, settings.getLocalServerIp(), peerManager);
+            createServer();
         }
 
         peerManager.start();
+    }
+
+    private void createClient() {
+        PortPair portPair = portFactory.clientRouterPair();
+        PeerPair peerPair = peerFactory.clientRouterPeer();
+        client = new ClientRouter(proxyFactory, portPair, peerPair, peerRegistry, proxyRegistry);
+        peerRegistry.subscribeOnRemotePeerChanged(client::onPeerChanged);
+        peerManager.notifyPeerState(client, State.CONNECTED);
+    }
+
+    private void createServer() {
+        PortPair portPair = portFactory.serverRouterPair();
+        PeerPair peerPair = peerFactory.serverRouterPeer();
+        server = new ServerRouter(portPair, peerPair, proxyFactory, peerRegistry, proxyRegistry);
+        peerRegistry.subscribeOnRemotePeerChanged(server::onPeerChanged);
+        peerManager.notifyPeerState(server, State.CONNECTED);
     }
 
     public void stop() throws IOException {

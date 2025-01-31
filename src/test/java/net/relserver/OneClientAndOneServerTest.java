@@ -10,11 +10,11 @@ public class OneClientAndOneServerTest {
         TestUtils.createServer(realServerPort, "server->");
 
         //prepare real client
-        int clientPort = realServerPort + 1;
-        TestUtils.createClient("client->", clientPort);
+        int clientPort = 30000;
+        TestUtils.createClient("client", clientPort);
 
-        ReLServerCliRunner.main(new String[]{"-mode=hub"});
-        ReLServerCliRunner.main(new String[]{"-mode=client", "-hubIp=127.0.0.1", "-appPort=" + clientPort});
-        ReLServerCliRunner.main(new String[]{"-mode=server", "-hubIp=127.0.0.1", "-appPort=" + realServerPort});
+        ReLServerCliRunner.main(new String[]{"-mode=hub", "-log=true", "-logPacket=true"});
+        ReLServerCliRunner.main(new String[]{"-mode=client", "-log=true", "-logPacket=true", "-hubIp=127.0.0.1", "-appPort=" + clientPort});
+        ReLServerCliRunner.main(new String[]{"-mode=server", "-log=true", "-logPacket=true", "-hubIp=127.0.0.1", "-appPort=" + realServerPort});
     }
 }

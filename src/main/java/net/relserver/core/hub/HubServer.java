@@ -14,7 +14,9 @@ import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class HubServer {
     private final String id;
@@ -24,6 +26,8 @@ public class HubServer {
 
     //peerManagerId <=> instance
     private final Map<String, AppInstance> instances = new ConcurrentHashMap<>();
+    private final Queue<DatagramPacket> peerRegistrationQueue = new ConcurrentLinkedQueue<>();
+    private final Thread peerRegistrationWorker;
 
     public HubServer(Settings settings) {
         this.id = Id.generateId(Constants.HUB_PREFIX);
@@ -42,6 +46,15 @@ public class HubServer {
 
         acceptNewPeerManagerConnections();
         runUdpPeerRegistrationThread();
+        peerRegistrationWorker = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                DatagramPacket packet = peerRegistrationQueue.poll();
+                if (packet != null) {
+                    processPeerRequest(packet);
+                }
+            }
+        });
+        peerRegistrationWorker.start();
     }
 
     void acceptNewPeerManagerConnections() {
@@ -154,20 +167,15 @@ public class HubServer {
                 try {
                     udpSocket.receive(packet);
                     Logger.logPacket(id, packet, false);
-
-                    Peer peer = getPeer(packet);
-
-                    AppInstance appInstance = instances.get(peer.getPeerManagerId());
-                    if (appInstance != null) {
-                        appInstance.onPeerStateChanged(peer);
+                    boolean offered = peerRegistrationQueue.offer(packet);
+                    if (!offered) {
+                        Logger.log("Peer registration queue is full. Peer lost: %s:%s", packet.getAddress().getHostAddress(), packet.getPort()); //todo
                     }
-
-                    notifyPeerStateChanged(peer, peer.getState());
                 } catch (SocketTimeoutException e) {
                     //ignore
                 } catch (SocketException e) {
                     Logger.log("Udp peer registration socket closed");
-                    e.printStackTrace();
+                    e.printStackTrace(); //todo
                     return;
                 } catch (Exception e) {
                     throw new RuntimeException(e); //todo
@@ -176,17 +184,28 @@ public class HubServer {
         }).start();
     }
 
-    private Peer getPeer(DatagramPacket packet) {
-        String message = new String(packet.getData(), StandardCharsets.UTF_8).trim();
-        Logger.log("Hub %s received peer: %s", this.id, message);
-        Host host = new Host(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP);
-        Peer peer = Utils.fromJson(message, Peer.class);
-        peer.setHost(host);
-        return peer;
+    private void processPeerRequest(DatagramPacket packet) {
+        try {
+            String message = new String(packet.getData(), StandardCharsets.UTF_8).trim();
+            Logger.log("Hub %s received peer: %s", this.id, message);
+            Host host = new Host(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP);
+            Peer peer = Utils.fromJson(message, Peer.class);
+            peer.setHost(host);
+
+            AppInstance appInstance = instances.get(peer.getPeerManagerId());
+            if (appInstance != null) {
+                appInstance.onPeerStateChanged(peer);
+            }
+
+            notifyPeerStateChanged(peer, peer.getState());
+        } catch (Exception e) {
+            e.printStackTrace();//todo
+        }
     }
 
     public void stop() throws IOException {
         serverSocket.close();
         udpSocket.close();
+        peerRegistrationWorker.interrupt();
     }
 }

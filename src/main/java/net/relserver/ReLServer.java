@@ -43,11 +43,11 @@ public class ReLServer {
         peerRegistry = new PeerRegistry(app);
         peerManager = new PeerManager(settings, app, peerRegistry);
         proxyRegistry = new ProxyRegistry(peerManager);
-        peerRegistry.subscribeOnRemotePeerChanged(proxyRegistry::updateProxyRemotePeer);
         peerFactory = new PeerFactory(app, peerManager);
         portFactory = new PortFactory(app, settings);
         proxyFactory = new ProxyFactory(portFactory, peerFactory, settings.getLocalServerIp(), peerRegistry, proxyRegistry);
 
+        peerRegistry.subscribeOnRemotePeerChanged(proxyRegistry::updateProxyRemotePeer);
 
         if (Mode.CLIENT_SERVER == mode) {
             createClient();
@@ -77,6 +77,7 @@ public class ReLServer {
         peerManager.notifyPeerState(server, State.CONNECTED);
     }
 
+    //todo proper order
     public void stop() throws IOException {
         if (hub != null) {
             hub.stop();
@@ -90,5 +91,6 @@ public class ReLServer {
         if (peerManager != null) {
             peerManager.stop();
         }
+        peerRegistry.stop();
     }
 }

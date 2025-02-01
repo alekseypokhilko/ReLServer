@@ -26,6 +26,8 @@ public class HubServer {
 
     //peerManagerId <=> instance
     private final Map<String, AppInstance> instances = new ConcurrentHashMap<>();
+    //peerId <=> peer
+    private final Map<String, Peer> peers = new ConcurrentHashMap<>();
     private final Queue<DatagramPacket> peerRegistrationQueue = new ConcurrentLinkedQueue<>();
     private final Thread peerRegistrationWorker;
 
@@ -75,8 +77,8 @@ public class HubServer {
         new Thread(() -> {
             try {
                 AppInstance instance = getPeerManagerInfo(socket);
-                sendPeers(instance);
                 this.instances.put(instance.getPeerManagerId(), instance);
+                sendPeers(instance);
                 Logger.log("Peer manager %s connected: appId=%s host=%s", instance.getPeerManagerId(), instance.getAppId(), instance.getHostId());
             } catch (Exception e) {
                 e.printStackTrace(); //todo
@@ -85,9 +87,11 @@ public class HubServer {
     }
 
     private void sendPeers(AppInstance instance) {
-        for (AppInstance pmi : instances.values()) {
-            writeToSocket(instance, pmi.getClientRouter());
-            writeToSocket(instance, pmi.getServerRouter());
+        for (Peer peer : peers.values()) {
+            if (instance.getAppId().equals(peer.getAppId())
+                    && (peer.isRouter() || instance.getPeerManagerId().equals(peer.getRemotePeerManagerId()))) {
+                writeToSocket(instance, peer);
+            }
         }
     }
 
@@ -105,6 +109,7 @@ public class HubServer {
         try {
             AppInstance removed = instances.remove(instance.getPeerManagerId());
             if (removed != null) {
+                //todo remove all for PM from peers
                 notifyPeerStateChanged(removed.getServerRouter(), State.DISCONNECTED);
                 notifyPeerStateChanged(removed.getClientRouter(), State.DISCONNECTED);
                 Logger.log("Peer manager %s disconnected: %s", removed.getPeerManagerId(), removed.getHostId());
@@ -194,8 +199,11 @@ public class HubServer {
 
             AppInstance appInstance = instances.get(peer.getPeerManagerId());
             if (appInstance != null) {
+                //todo remove
                 appInstance.onPeerStateChanged(peer);
             }
+
+            peers.put(peer.getId(), peer);
 
             notifyPeerStateChanged(peer, peer.getState());
         } catch (Exception e) {

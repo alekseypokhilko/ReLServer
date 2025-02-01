@@ -93,4 +93,16 @@ public class ReLServer {
         }
         peerRegistry.stop();
     }
+
+    public HubServer getHub() {
+        return hub;
+    }
+
+    public ClientRouter getClient() {
+        return client;
+    }
+
+    public ServerRouter getServer() {
+        return server;
+    }
 }

@@ -33,9 +33,6 @@ public class PeerRegistry {
     }
 
     public void onPeerChanged(Peer remotePeer) {
-        if (!app.getId().equals(remotePeer.getAppId())) {
-            return;
-        }
         boolean offered = queue.offer(remotePeer);
         if (!offered) {
             Logger.log("Peer queue is full. Peer lost: %s", remotePeer); //todo

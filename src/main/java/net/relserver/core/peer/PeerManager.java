@@ -91,6 +91,9 @@ public class PeerManager implements Id {
         }
         try {
             Peer peer = Utils.fromJson(peerInfo, Peer.class);
+            if (!app.getId().equals(peer.getAppId()) && !(!peer.isRouter() && id.equals(peer.getPeerManagerId()))) {
+                return;
+            }
             peerRegistry.onPeerChanged(peer);
         } catch (Exception e) {
             e.printStackTrace();//todo

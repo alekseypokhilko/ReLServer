@@ -16,6 +16,7 @@ public class UdpPort implements Port<DatagramPacket> {
     private final Settings settings;
     private final DatagramSocket udpSocket;
     private Consumer<DatagramPacket> onPacketReceived;
+    private Thread receiverThread;
 
     public UdpPort(Integer port, Settings settings) {
         this.settings = settings;
@@ -35,9 +36,9 @@ public class UdpPort implements Port<DatagramPacket> {
     }
 
     protected void runReceiverThread() {
-        new Thread(() -> {
+        receiverThread = new Thread(() -> {
             Integer bufSize = settings.getInt(Settings.packetBufferSize);
-            while (true) {
+            while (!Thread.interrupted()) {
                 try {
                     byte[] buf2 = new byte[bufSize];  //todo check GC stats
                     DatagramPacket packet = new DatagramPacket(buf2, buf2.length);
@@ -58,7 +59,8 @@ public class UdpPort implements Port<DatagramPacket> {
                     e.printStackTrace();//todo
                 }
             }
-        }, this.id + "-thread").start();
+        }, this.id + "-thread");
+        receiverThread.start();
     }
 
     public void send(DatagramPacket packet, Host host) {
@@ -85,6 +87,7 @@ public class UdpPort implements Port<DatagramPacket> {
     @Override
     public void close() {
         try {
+            receiverThread.interrupt();
             udpSocket.close();
         } catch (Exception e) {
             Logger.log("Exception while closing port: %s", e.getMessage());

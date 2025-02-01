@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ public class HubServer {
     private final Map<String, Peer> peers = new ConcurrentHashMap<>();
     private final Queue<DatagramPacket> peerRegistrationQueue = new ConcurrentLinkedQueue<>();
     private final Thread peerRegistrationWorker;
+    private Thread acceptNewPeerManagerConnectionsWorker;
 
     public HubServer(Settings settings) {
         this.id = Id.generateId(Constants.HUB_PREFIX);
@@ -60,8 +62,8 @@ public class HubServer {
     }
 
     void acceptNewPeerManagerConnections() {
-        new Thread(() -> {
-            while (true) {
+        acceptNewPeerManagerConnectionsWorker = new Thread(() -> {
+            while (!Thread.interrupted()) {
                 try {
                     Socket socket = serverSocket.accept();
                     registerPeerManager(socket);
@@ -69,7 +71,8 @@ public class HubServer {
                     Logger.log("Exception on acceptNewPeerManagerConnections thread: %s", se.getMessage());
                 }
             }
-        }, "acceptConnections-" + id).start();
+        }, "acceptConnections-" + id);
+        acceptNewPeerManagerConnectionsWorker.start();
 
     }
 
@@ -215,5 +218,32 @@ public class HubServer {
         serverSocket.close();
         udpSocket.close();
         peerRegistrationWorker.interrupt();
+        acceptNewPeerManagerConnectionsWorker.interrupt();
+    }
+
+    public Map<String, Object> getStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("size", peers.keySet().size());
+
+        int clientRouters = 0;
+        int serverRouters = 0;
+        int clientProxies = 0;
+        int serverProxies = 0;
+        for (Peer peer : peers.values()) {
+            if (peer.isRouter() && peer.getMode() == Mode.CLIENT) {
+                clientRouters++;
+            } else if (peer.isRouter() && peer.getMode() == Mode.SERVER) {
+                serverRouters++;
+            } else if (!peer.isRouter() && peer.getMode() == Mode.SERVER) {
+                serverProxies++;
+            }else if (!peer.isRouter() && peer.getMode() == Mode.CLIENT) {
+                clientProxies++;
+            }
+        }
+        stats.put("clientRouters", clientRouters);
+        stats.put("clientProxies", clientProxies);
+        stats.put("serverRouters", serverRouters);
+        stats.put("serverProxies", serverProxies);
+        return stats;
     }
 }

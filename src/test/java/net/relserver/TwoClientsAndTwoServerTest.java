@@ -12,8 +12,8 @@ public class TwoClientsAndTwoServerTest {
 
         //prepare real client
         int clientPort1 = realServerPort - 1;
-        TestUtils.createClient("client1->", clientPort1);
-        TestUtils.createClient("client2->", clientPort1);
+        TestUtils.createClient("client1->", clientPort1, 1);
+        TestUtils.createClient("client2->", clientPort1, 1);
 
         ReLServerCliRunner.main(new String[]{"-mode=hub", "-log=true" });
         ReLServerCliRunner.main(new String[]{"-mode=client", "-log=true", "-hubIp=127.0.0.1", "-appPort=" + clientPort1});

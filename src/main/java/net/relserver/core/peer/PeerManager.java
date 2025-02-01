@@ -73,7 +73,7 @@ public class PeerManager implements Id {
                 out.flush();
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(serviceSocket.getInputStream()));
-                while (true) {
+                while (!Thread.interrupted()) {
                     String peerInfo = in.readLine();
                     Logger.log("Peer manager %s received peer: %s", id, peerInfo);
                     receiveRemotePeer(peerInfo);

@@ -11,7 +11,7 @@ public class OneClientAndOneServerTest {
 
         //prepare real client
         int clientPort = 30000;
-        TestUtils.createClient("client", clientPort);
+        TestUtils.createClient("client", clientPort, 1);
 
         ReLServerCliRunner.main(new String[]{"-mode=hub", "-log=true", "-logPacket=true"});
         ReLServerCliRunner.main(new String[]{"-mode=client", "-log=true", "-logPacket=true", "-hubIp=127.0.0.1", "-appPort=" + clientPort});

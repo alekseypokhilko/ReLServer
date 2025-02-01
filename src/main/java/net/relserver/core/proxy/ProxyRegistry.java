@@ -70,4 +70,10 @@ public class ProxyRegistry {
         }
         return ids;
     }
+
+    public void stop() {
+        for (Proxy proxy : registry.values()) {
+            proxy.stop();
+        }
+    }
 }

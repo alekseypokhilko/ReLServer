@@ -78,9 +78,13 @@ public class ReLServer {
     }
 
     //todo proper order
-    public void stop() throws IOException {
+    public void stop() {
         if (hub != null) {
-            hub.stop();
+            try {
+                hub.stop();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         if (client != null) {
             client.stop();
@@ -92,6 +96,7 @@ public class ReLServer {
             peerManager.stop();
         }
         peerRegistry.stop();
+        proxyRegistry.stop();
     }
 
     public HubServer getHub() {

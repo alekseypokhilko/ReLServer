@@ -2,6 +2,7 @@ package net.relserver.core.hub;
 
 import net.relserver.core.Constants;
 import net.relserver.core.api.Id;
+import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
 import net.relserver.core.Settings;
 import net.relserver.core.peer.*;
@@ -21,8 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class HubServer {
     private final String id;
-    private final Settings settings;
-    private final DatagramSocket udpSocket;
+    private final UdpPort registrationPort;
     private final ServerSocket serverSocket;
 
     //peerManagerId <=> instance
@@ -30,39 +30,34 @@ public class HubServer {
     //peerId <=> peer
     private final Map<String, Peer> peers = new ConcurrentHashMap<>();
     private final Queue<DatagramPacket> peerRegistrationQueue = new ConcurrentLinkedQueue<>();
+    private final Thread acceptPeerManagerConnectionsThread;
     private final Thread peerRegistrationWorker;
-    private Thread acceptNewPeerManagerConnectionsWorker;
 
     public HubServer(Settings settings) {
         this.id = Id.generateId(Constants.HUB_PREFIX);
-        this.settings = settings;
         int servicePort = settings.getInt(Settings.hubServicePort);
         int registrationPort = settings.getInt(Settings.hubRegistrationPort);
 
+        this.registrationPort = new UdpPort(registrationPort, settings);
+        this.registrationPort.setOnPacketReceived(this::onUdpPeerRegistrationRequest);
+
         try {
             serverSocket = new ServerSocket(servicePort);
-            udpSocket = new DatagramSocket(registrationPort);
-            udpSocket.setSoTimeout(settings.getInt(Settings.socketTimeout));
             Logger.log("Hub %s started with ports, TCP: %d UDP: %d", id, servicePort, registrationPort);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        acceptNewPeerManagerConnections();
-        runUdpPeerRegistrationThread();
-        peerRegistrationWorker = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                DatagramPacket packet = peerRegistrationQueue.poll();
-                if (packet != null) {
-                    processPeerRequest(packet);
-                }
-            }
-        });
+        acceptPeerManagerConnectionsThread = getPeerManagerConnectionsThread();
+        acceptPeerManagerConnectionsThread.start();
+
+        //todo move to Hub Peer registry
+        peerRegistrationWorker = new Thread(this::peerRegistrationWorkerLoop, "peerRegistrationWorker");
         peerRegistrationWorker.start();
     }
 
-    void acceptNewPeerManagerConnections() {
-        acceptNewPeerManagerConnectionsWorker = new Thread(() -> {
+    private Thread getPeerManagerConnectionsThread() {
+        return new Thread(() -> {
             while (!Thread.interrupted()) {
                 try {
                     Socket socket = serverSocket.accept();
@@ -72,8 +67,22 @@ public class HubServer {
                 }
             }
         }, "acceptConnections-" + id);
-        acceptNewPeerManagerConnectionsWorker.start();
+    }
 
+    private void onUdpPeerRegistrationRequest(DatagramPacket packet) {
+        boolean offered = peerRegistrationQueue.offer(packet);
+        if (!offered) {
+            Logger.log("Peer registration queue is full. Peer lost: %s:%s", packet.getAddress().getHostAddress(), packet.getPort()); //todo
+        }
+    }
+
+    private void peerRegistrationWorkerLoop() {
+        while (!Thread.interrupted()) {
+            DatagramPacket packet = peerRegistrationQueue.poll();
+            if (packet != null) {
+                processPeerRequest(packet);
+            }
+        }
     }
 
     private void registerPeerManager(Socket socket) {
@@ -166,32 +175,6 @@ public class HubServer {
         }
     }
 
-    private void runUdpPeerRegistrationThread() {
-        new Thread(() -> {
-            Integer bufSize = settings.getInt(Settings.packetBufferSize);
-            while (true) {
-                byte[] buf = new byte[bufSize];
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                try {
-                    udpSocket.receive(packet);
-                    Logger.logPacket(id, packet, false);
-                    boolean offered = peerRegistrationQueue.offer(packet);
-                    if (!offered) {
-                        Logger.log("Peer registration queue is full. Peer lost: %s:%s", packet.getAddress().getHostAddress(), packet.getPort()); //todo
-                    }
-                } catch (SocketTimeoutException e) {
-                    //ignore
-                } catch (SocketException e) {
-                    Logger.log("Udp peer registration socket closed");
-                    e.printStackTrace(); //todo
-                    return;
-                } catch (Exception e) {
-                    throw new RuntimeException(e); //todo
-                }
-            }
-        }).start();
-    }
-
     private void processPeerRequest(DatagramPacket packet) {
         try {
             String message = new String(packet.getData(), StandardCharsets.UTF_8).trim();
@@ -216,9 +199,10 @@ public class HubServer {
 
     public void stop() throws IOException {
         serverSocket.close();
-        udpSocket.close();
+        registrationPort.close();
         peerRegistrationWorker.interrupt();
-        acceptNewPeerManagerConnectionsWorker.interrupt();
+        acceptPeerManagerConnectionsThread.interrupt();
+        registrationPort.close();
     }
 
     public Map<String, Object> getStats() {

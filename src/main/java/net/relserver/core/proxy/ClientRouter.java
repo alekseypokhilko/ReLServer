@@ -1,7 +1,6 @@
 package net.relserver.core.proxy;
 
 import net.relserver.core.util.Logger;
-import net.relserver.core.util.Utils;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.api.Proxy;
@@ -36,16 +35,9 @@ public class ClientRouter extends AbstractProxy {
     }
 
     public void onPeerChanged(Peer peer) {
-        try {
-            if (State.DISCONNECTED == peer.getState() || Mode.SERVER != peer.getMode()) {
-                return;
-            }
+        if (State.DISCONNECTED != peer.getState() && peer.isRouter() && Mode.SERVER == peer.getMode()) {
             sendHandshakePacket(peer);
-            if (peer.isRouter() && Mode.SERVER == peer.getMode()) {
-                createProxyForAllClients(peer);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();//todo
+            createProxyForAllClients(peer);
         }
     }
 
@@ -53,6 +45,7 @@ public class ClientRouter extends AbstractProxy {
         String key = Host.toId(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP); //todo find more fast solution
         Set<String> proxyIds = this.clientProxyIds.get(key);
         if (proxyIds != null) {
+            //todo collect and check statistic of proxy packet-per-period and delete not used proxies
             sendToAllRemoteServers(packet, proxyIds);
         } else {
             createProxiesForAllRemoteServers(packet, key);
@@ -85,12 +78,6 @@ public class ClientRouter extends AbstractProxy {
         }
     }
 
-    private void sendCreateProxyRequest(Peer remoteRouterPeer, Peer proxyInfo) {
-        byte[] data = Utils.toJson(proxyInfo).getBytes();
-        DatagramPacket createProxyRequest = new DatagramPacket(data, data.length);
-        portPair.getP2pPort().send(createProxyRequest, remoteRouterPeer.getHost());
-    }
-
     protected void processResponse(DatagramPacket packet) {
         Logger.logPacket(portPair.getP2pPort().getId(), packet, false);
     }
@@ -99,9 +86,7 @@ public class ClientRouter extends AbstractProxy {
         Logger.log("Creating proxy for peer: %s", remoteServer);
         ClientProxy clientProxy = proxyFactory.createClientProxy(clientHostPort, remoteServer);
 
-        this.clientProxyIds.get(clientHostPort).add(clientProxy.getPeerPair().getPeer().getId());
-
-        sendCreateProxyRequest(remoteServer, clientProxy.getRemotePeer());
+        this.clientProxyIds.get(clientHostPort).add(clientProxy.getId());
         return clientProxy;
     }
 }

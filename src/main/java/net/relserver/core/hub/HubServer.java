@@ -183,12 +183,6 @@ public class HubServer {
             Peer peer = Utils.fromJson(message, Peer.class);
             peer.setHost(host);
 
-            AppInstance appInstance = instances.get(peer.getPeerManagerId());
-            if (appInstance != null) {
-                //todo remove
-                appInstance.onPeerStateChanged(peer);
-            }
-
             peers.put(peer.getId(), peer);
 
             notifyPeerStateChanged(peer, peer.getState());

@@ -1,6 +1,5 @@
 package net.relserver.core.proxy;
 
-import net.relserver.core.Constants;
 import net.relserver.core.api.Proxy;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortPair;
@@ -15,6 +14,7 @@ public abstract class AbstractProxy implements Proxy {
     protected final PortPair portPair;
     protected final PeerPair peerPair;
     protected final PeerRegistry peerRegistry;
+    protected State state = State.DISCONNECTED;
 
     public AbstractProxy(PortPair portPair, PeerPair peerPair, PeerRegistry peerRegistry) {
         this.peerRegistry = peerRegistry;
@@ -40,13 +40,51 @@ public abstract class AbstractProxy implements Proxy {
         Utils.sendWithRetry(portPair.getP2pPort(), packet, peerPair.getRemotePeer(), 10, 100L, peerRegistry::get);
     }
 
+    protected void updateRemotePeer() {
+        Peer remotePeer = peerPair.getRemotePeer();
+        if (remotePeer == null) {
+            return;
+        }
+        Peer actualRemotePeer = peerRegistry.get(remotePeer.getRemotePeerId());
+        if (actualRemotePeer != null && actualRemotePeer.getHost() != null) {
+            peerPair.setRemotePeer(actualRemotePeer);
+        }
+    }
+
     @Override
     public void sendHandshakePacket(Peer peer) {
-        String msg = Constants.HANDSHAKE_MESSAGE_PREFIX + ":" + this.getId() + "<=>" + peer.getId();
+        Peer remotePeer = peer == null ? peerPair.getRemotePeer() : peer;
+        Handshake handshake = new Handshake(this.getId(), remotePeer.getId(), State.CONNECTED == state);
+        sendHandshake(remotePeer, handshake);
+    }
+
+    protected void receiveHandshakePacket(DatagramPacket packet) {
+        if (State.CONNECTED == state) {
+            return;
+        }
+        String handshakeMessage = new String(packet.getData()).trim();
+        Logger.log("Received handshake: %s", handshakeMessage);
+        Handshake handshake = Handshake.of(handshakeMessage);
+        Peer remotePeer = peerPair.getRemotePeer();
+        if (!remotePeer.getId().equals(handshake.getFrom()) || !this.getId().equals(handshake.getTo())) {
+            return;
+        }
+        if (handshake.isReceived() && State.DISCONNECTED == state) {
+            state = State.CONNECTED;
+            Logger.log("Proxy %s changed state to %s", getId(), state);
+        }
+        Handshake handshakeResponse = new Handshake(this.getId(), remotePeer.getId(), true);
+        sendHandshake(remotePeer, handshakeResponse);
+    }
+
+    private void sendHandshake(Peer remotePeer, Handshake handshake) {
+        String msg = handshake.toString();
         Logger.log("Sending handshake: %s", msg);
         byte[] senData = msg.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(senData, senData.length);
-        Utils.sendWithRetry(getPortPair().getP2pPort(), packet, peer, 10, 100L, peerRegistry::get);
+        if (remotePeer.getHost() != null) {
+            getPortPair().getP2pPort().send(packet, remotePeer.getHost());
+        }
     }
 
     @Override
@@ -69,6 +107,11 @@ public abstract class AbstractProxy implements Proxy {
     @Override
     public PortPair getPortPair() {
         return portPair;
+    }
+
+    @Override
+    public State getState() {
+        return state;
     }
 
     @Override

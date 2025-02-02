@@ -23,6 +23,7 @@ public class ClientProxy extends AbstractProxy {
 
     protected void processResponse(DatagramPacket packet) {
         if (Utils.isHandshake(packet.getData())) {
+            receiveHandshakePacket(packet);
             return;
         }
         //from real remote server -> local client
@@ -36,6 +37,7 @@ public class ClientProxy extends AbstractProxy {
 
         Peer remotePeer = peerPair.getRemotePeer();
         if (remotePeer.getHost() == null) {
+            updateRemotePeer();
             sendWithRetry(packet);
         } else {
             //from local client -> real remote server

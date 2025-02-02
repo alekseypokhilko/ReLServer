@@ -25,13 +25,16 @@ public class ServerRouter extends AbstractProxy {
     }
 
     public void processRequest(DatagramPacket packet) {
+        if (Utils.isHandshake(packet.getData())) {
+            return;
+        }
+
         String peerInfo = new String(packet.getData(), StandardCharsets.UTF_8).trim();
         Logger.log("Router %s received create proxy request: '%s'", peerPair.getPeer().getId(), peerInfo);
         try {
-            if (peerInfo.isEmpty() || Utils.isHandshake(packet.getData())) {
+            if (peerInfo.isEmpty()) {
                 return;
             }
-
             Peer peerRequest = Utils.fromJson(peerInfo, Peer.class);
             if (Mode.SERVER != peerRequest.getMode() && this.proxyRegistry.get(peerRequest.getId()) != null) {
                 return;
@@ -50,9 +53,19 @@ public class ServerRouter extends AbstractProxy {
     }
 
     public void onPeerChanged(Peer peer) {
-        if (State.DISCONNECTED == peer.getState() || Mode.SERVER != peer.getMode()) {
-            return;
+        if (State.CONNECTED == peer.getState()
+                && peer.isRouter()
+                && Mode.CLIENT == peer.getMode()) {
+            sendHandshakePacket(peer);
         }
-        sendHandshakePacket(peer);
+
+        if (State.CONNECTED == peer.getState()
+                && Mode.CLIENT == peer.getMode()
+                && peerPair.getPeer().getAppId().equals(peer.getAppId())
+                && !peer.isRouter()
+                && peerPair.getPeer().getPeerManagerId().equals(peer.getRemotePeerManagerId())
+                && proxyRegistry.get(peer.getRemotePeerId()) == null) {
+            proxyFactory.createServerProxy(peer);
+        }
     }
 }

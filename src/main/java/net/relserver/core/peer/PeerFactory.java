@@ -48,17 +48,11 @@ public class PeerFactory {
 
         Host appHost = new Host(localServerIp, app.getPort(), Protocol.UDP);
         Peer peer = Peer.of(
-                peerManager.getId(), peerRequest.getId(),
+                peerManager.getId(), peerRequest.getRemotePeerId(),
                 State.CONNECTED, Mode.SERVER,
-                peerRequest.getRemotePeerManagerId(), peerRequest.getRemotePeerId(),
+                peerRequest.getPeerManagerId(), peerRequest.getId(),
                 app.getId(), appHost
         );
-        Peer remotePeer = Peer.of(
-                peerRequest.getRemotePeerManagerId(), peerRequest.getRemotePeerId(),
-                State.CONNECTED, Mode.CLIENT,
-                peerManager.getId(), peerRequest.getId(),
-                app.getId(), null
-        );
-        return new PeerPair(peer, remotePeer);
+        return new PeerPair(peer, peerRequest);
     }
 }

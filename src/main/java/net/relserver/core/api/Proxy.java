@@ -1,6 +1,7 @@
 package net.relserver.core.api;
 
 import net.relserver.core.peer.PeerPair;
+import net.relserver.core.peer.State;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.peer.Peer;
 
@@ -10,6 +11,7 @@ public interface Proxy extends Id {
 
     void processRequest(DatagramPacket packet);
 
+    State getState();
     PeerPair getPeerPair();
 
     PortPair getPortPair();

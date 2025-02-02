@@ -26,7 +26,8 @@ public class ServerProxy extends AbstractProxy {
         //from local server -> remote client
         Peer remotePeer = this.peerPair.getRemotePeer();
         if (remotePeer.getHost() == null) {
-            Utils.sendWithRetry(portPair.getP2pPort(), packet, peerPair.getRemotePeer(), 10, 100L, peerRegistry::get);
+            updateRemotePeer();
+            sendWithRetry(packet);
         } else {
             portPair.getP2pPort().send(packet, remotePeer.getHost());
         }
@@ -34,6 +35,7 @@ public class ServerProxy extends AbstractProxy {
 
     public void processRequest(DatagramPacket packet) {
         if (Utils.isHandshake(packet.getData())) {
+            receiveHandshakePacket(packet);
             return;
         }
         //from remote client -> local server

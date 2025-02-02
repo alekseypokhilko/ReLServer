@@ -7,16 +7,18 @@ public class Server {
         //prepare real client
         int port = 7893;
         String hubIp = "195.74.86.111";
-        String localServerIp = "192.168.0.23";
-        String appId = "mc4_ios";
+//        String localServerIp = "192.168.0.23";
+        String appId = "glmc4zh";
 
 //        ReLserverCliRunner.main(new String[]{"server"});
         ReLServerCliRunner.main(new String[]{
                 "-mode=server",
+                "-log=true",
+                "-logPacket=true",
                 "-appId=" + appId,
                 "-hubIp=" + hubIp,
-                "-localServerIp=" + localServerIp,
-                "-appPort=" + port
+//                "-localServerIp=" + localServerIp,
+//                "-appPort=" + port
         });
     }
 }

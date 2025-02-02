@@ -75,8 +75,10 @@ public class PeerManager implements Id {
                 BufferedReader in = new BufferedReader(new InputStreamReader(serviceSocket.getInputStream()));
                 while (!Thread.interrupted()) {
                     String peerInfo = in.readLine();
-                    Logger.log("Peer manager %s received peer: %s", id, peerInfo);
-                    receiveRemotePeer(peerInfo);
+                    if (peerInfo != null) {
+                        Logger.log("Peer manager %s received peer: %s", id, peerInfo);
+                        receiveRemotePeer(peerInfo);
+                    }
                 }
             } catch (Exception e) {
                 Logger.log("Disconnected from Hub: %s", e.getMessage()); //todo throw from main thread

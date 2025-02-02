@@ -10,11 +10,20 @@ import java.util.List;
 import java.util.Map;
 
 public class ManyClientsAndManyServersTest {
-    private static final int SERVER_COUNT = 5;
-    private static final int CLIENT_COUNT = 200;
+    private static final int SERVER_COUNT = 1;
+    private static final int CLIENT_COUNT = 1;
 
     public static void main(String[] args) throws Exception {
-        HubServer hub = ReLServerCliRunner.of(new String[]{"-mode=hub", /*"-log=true"*/}).getHub();
+        String log = "-log=true";
+        HubServer hub = ReLServerCliRunner.of(new String[]{"-mode=hub", log}).getHub();
+
+        int clientPort = 30000;
+        List<TestClient> clients = new ArrayList<>();
+        ReLServer clientRouter = ReLServerCliRunner.of(new String[]{"-mode=client", log, "-hubIp=127.0.0.1", "-appPort=" + clientPort});
+        for (int i = 0; i < CLIENT_COUNT; i++) {
+            Thread.sleep(100L);
+            clients.add(TestUtils.createClient("client" + i, clientPort, 1));
+        }
 
         List<ReLServer> serverRouters = new ArrayList<>();
         List<TestServer> fakeServers = new ArrayList<>();
@@ -22,17 +31,11 @@ public class ManyClientsAndManyServersTest {
         for (int i = 0; i < SERVER_COUNT; i++) {
             int port = realServerPort + i;
             fakeServers.add(TestUtils.createServer(port, "server" + i));
-            ReLServer server = ReLServerCliRunner.of(new String[]{"-mode=server", /*"-log=true",*/ "-hubIp=127.0.0.1", "-appPort=" + port});
+            ReLServer server = ReLServerCliRunner.of(new String[]{"-mode=server", log, "-hubIp=127.0.0.1", "-appPort=" + port});
             serverRouters.add(server);
         }
 
-        int clientPort = 30000;
-        List<TestClient> clients = new ArrayList<>();
-        ReLServer clientRouter = ReLServerCliRunner.of(new String[]{"-mode=client", /*"-log=true",*/ "-hubIp=127.0.0.1", "-appPort=" + clientPort});
-        for (int i = 0; i < CLIENT_COUNT; i++) {
-            Thread.sleep(100L);
-            clients.add(TestUtils.createClient("client" + i, clientPort, 1));
-        }
+
 
         Thread.sleep(9000L);
         Map<String, Object> stats = hub.getStats();

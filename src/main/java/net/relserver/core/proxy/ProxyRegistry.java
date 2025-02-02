@@ -15,9 +15,12 @@ public class ProxyRegistry {
     private final PeerManager peerManager;
     //proxyId <=> proxy
     private final Map<String, Proxy> registry = new ConcurrentHashMap<>();
+    private final Thread worker;
 
     public ProxyRegistry(PeerManager peerManager) {
         this.peerManager = peerManager;
+        worker = new Thread(this::handshakeLoop, "handshakeLoop");
+        worker.start();
     }
 
     public void add(Proxy proxy) {
@@ -71,9 +74,25 @@ public class ProxyRegistry {
         return ids;
     }
 
+    private void handshakeLoop() {
+        while (!Thread.interrupted()) {
+            for (Proxy proxy : registry.values()) {
+                if (!proxy.getPeerPair().getPeer().isRouter() && State.DISCONNECTED == proxy.getState()) {
+                    proxy.sendHandshakePacket(null);
+                }
+            }
+            try {
+                Thread.sleep(1000L);//todo
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
     public void stop() {
         for (Proxy proxy : registry.values()) {
             proxy.stop();
         }
+        worker.interrupt();
     }
 }

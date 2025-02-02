@@ -8,7 +8,7 @@ public class Peer {
     /**
      * Peer manager id where current peer was created
      */
-    private final String peerManagerId;
+    private final String pmId;
     /**
      * Peer id
      */
@@ -18,11 +18,11 @@ public class Peer {
     /**
      * Remote peer id for p2p connection
      */
-    private final String remotePeerId;
+    private final String rpId;
     /**
      * Remote peer manager id for notification
      */
-    private final String remotePeerManagerId;
+    private final String rpmId;
     /**
      * Application id for filtering peers on the hub and creating proxies
      */
@@ -34,24 +34,24 @@ public class Peer {
     }
 
     public Peer(String peerManagerId, String id, State state, Mode mode, String remotePeerManagerId, String remotePeerId, String appId, Host host) {
-        this.peerManagerId = peerManagerId;
+        this.pmId = peerManagerId;
         this.id = id;
         this.state = state;
         this.mode = mode;
-        this.remotePeerManagerId = remotePeerManagerId;
-        this.remotePeerId = remotePeerId;
+        this.rpmId = remotePeerManagerId;
+        this.rpId = remotePeerId;
         this.appId = appId;
         this.host = host;
     }
 
     @Override
     public String toString() {
-        return peerManagerId + SEPARATOR +
+        return pmId + SEPARATOR +
                 id + SEPARATOR +
                 state + SEPARATOR +
                 mode + SEPARATOR +
-                remotePeerManagerId + SEPARATOR +
-                remotePeerId + SEPARATOR +
+                rpmId + SEPARATOR +
+                rpId + SEPARATOR +
                 appId +
                 host();
     }
@@ -75,7 +75,7 @@ public class Peer {
     }
 
     public String getRemotePeerId() {
-        return remotePeerId;
+        return rpId;
     }
 
     public Host getHost() {
@@ -95,14 +95,14 @@ public class Peer {
     }
 
     public String getPeerManagerId() {
-        return peerManagerId;
+        return pmId;
     }
 
     public String getRemotePeerManagerId() {
-        return remotePeerManagerId;
+        return rpmId;
     }
 
     public boolean isRouter() {
-        return remotePeerId == null;
+        return rpId == null;
     }
 }

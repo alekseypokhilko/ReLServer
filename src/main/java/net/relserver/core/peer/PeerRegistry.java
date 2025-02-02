@@ -21,14 +21,7 @@ public class PeerRegistry {
 
     public PeerRegistry(App app) {
         this.app = app;
-        worker = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                Peer peer = queue.poll();
-                if (peer != null) {
-                    processPeer(peer);
-                }
-            }
-        });
+        worker = new Thread(this::peerProcessingLoop, "peerProcessLoop");
         worker.start();
     }
 
@@ -36,6 +29,15 @@ public class PeerRegistry {
         boolean offered = queue.offer(remotePeer);
         if (!offered) {
             Logger.log("Peer queue is full. Peer lost: %s", remotePeer); //todo
+        }
+    }
+
+    private void peerProcessingLoop() {
+        while (!Thread.interrupted()) {
+            Peer peer = queue.poll();
+            if (peer != null) {
+                processPeer(peer);
+            }
         }
     }
 

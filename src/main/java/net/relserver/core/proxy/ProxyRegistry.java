@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ProxyRegistry {
     private final PeerManager peerManager;
@@ -19,7 +20,7 @@ public class ProxyRegistry {
 
     public ProxyRegistry(PeerManager peerManager) {
         this.peerManager = peerManager;
-        worker = new Thread(this::handshakeLoop, "handshakeLoop");
+        worker = new Thread(this::managementLoop, "managementLoop");
         worker.start();
     }
 
@@ -74,18 +75,33 @@ public class ProxyRegistry {
         return ids;
     }
 
-    private void handshakeLoop() {
+    private void managementLoop() {
         while (!Thread.interrupted()) {
             for (Proxy proxy : registry.values()) {
-                if (!proxy.getPeerPair().getPeer().isRouter() && State.DISCONNECTED == proxy.getState()) {
-                    proxy.sendHandshakePacket(null);
-                }
+                sendHandshakeIfNeeded(proxy);
+                removeIfNotUsed(proxy);
             }
             try {
                 Thread.sleep(1000L);//todo
             } catch (InterruptedException e) {
                 break;
             }
+        }
+    }
+
+    private void removeIfNotUsed(Proxy proxy) {
+        if (!proxy.getPeerPair().getPeer().isRouter()
+                && State.CONNECTED == proxy.getState()
+                && System.currentTimeMillis() - proxy.getLastP2pPacketSentTime() > TimeUnit.MINUTES.toMillis(5)) {
+            //todo move duration to settings
+            //todo find a low cost solution to remove unused proxies immediately after connecting to a game room
+            remove(proxy.getId());
+        }
+    }
+
+    private void sendHandshakeIfNeeded(Proxy proxy) {
+        if (!proxy.getPeerPair().getPeer().isRouter() && State.DISCONNECTED == proxy.getState()) {
+            proxy.sendHandshakePacket(null);
         }
     }
 

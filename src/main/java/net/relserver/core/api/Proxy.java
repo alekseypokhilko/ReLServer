@@ -12,6 +12,9 @@ public interface Proxy extends Id {
     void processRequest(DatagramPacket packet);
 
     State getState();
+
+    long getLastP2pPacketSentTime();
+
     PeerPair getPeerPair();
 
     PortPair getPortPair();

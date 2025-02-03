@@ -121,9 +121,12 @@ public class HubServer {
         try {
             AppInstance removed = instances.remove(instance.getPeerManagerId());
             if (removed != null) {
-                //todo remove all for PM from peers
-                notifyPeerStateChanged(removed.getServerRouter(), State.DISCONNECTED);
-                notifyPeerStateChanged(removed.getClientRouter(), State.DISCONNECTED);
+                for (Peer peer : peers.values()) {
+                    if (peer.getPeerManagerId().equals(instance.getPeerManagerId())) {
+                        notifyPeerStateChanged(peer, State.DISCONNECTED);
+                        peers.remove(peer.getId());
+                    }
+                }
                 Logger.log("Peer manager %s disconnected: %s", removed.getPeerManagerId(), removed.getHostId());
                 removed.getSocket().close();
             }
@@ -183,7 +186,11 @@ public class HubServer {
             Peer peer = Utils.fromJson(message, Peer.class);
             peer.setHost(host);
 
-            peers.put(peer.getId(), peer);
+            if (State.CONNECTED == peer.getState()) {
+                peers.put(peer.getId(), peer);
+            } else {
+                peers.remove(peer.getId());
+            }
 
             notifyPeerStateChanged(peer, peer.getState());
         } catch (Exception e) {

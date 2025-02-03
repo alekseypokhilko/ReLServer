@@ -15,6 +15,7 @@ public abstract class AbstractProxy implements Proxy {
     protected final PeerPair peerPair;
     protected final PeerRegistry peerRegistry;
     protected State state = State.DISCONNECTED;
+    protected long lastP2pPacketSentTime = System.currentTimeMillis();
 
     public AbstractProxy(PortPair portPair, PeerPair peerPair, PeerRegistry peerRegistry) {
         this.peerRegistry = peerRegistry;
@@ -112,6 +113,11 @@ public abstract class AbstractProxy implements Proxy {
     @Override
     public State getState() {
         return state;
+    }
+
+    @Override
+    public long getLastP2pPacketSentTime() {
+        return lastP2pPacketSentTime;
     }
 
     @Override

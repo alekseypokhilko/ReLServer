@@ -10,13 +10,16 @@ import java.nio.charset.StandardCharsets;
 
 public class TestClient {
 
+    String tag;
+    Host fakeServerHost;
     public int success;
     public int failed;
     Thread sender;
     UdpPort udpPort;
 
     public TestClient(String tag, int port, int count) {
-        Host fakeServerHost = new Host("127.0.0.1", port, Protocol.UDP);
+        this.tag = tag;
+        fakeServerHost = new Host("127.0.0.1", port, Protocol.UDP);
         this.udpPort = new UdpPort(null, new Settings(null));
         udpPort.setOnPacketReceived(packet -> {
             String receivedData = new String(packet.getData(), StandardCharsets.UTF_8).trim();
@@ -33,16 +36,20 @@ public class TestClient {
             for (int i = 0; i < count; i++) {
                 try {
                     Thread.sleep(5000L);
-                    byte[] buf = tag.getBytes(StandardCharsets.UTF_8);
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                    System.out.println(tag + " sent: " + new String(buf, StandardCharsets.UTF_8));
-                    udpPort.send(packet, fakeServerHost);
+                    send();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
         sender.start();
+    }
+
+    public void send() {
+        byte[] buf = this.tag.getBytes(StandardCharsets.UTF_8);
+        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+        System.out.println(this.tag + " sent: " + new String(buf, StandardCharsets.UTF_8));
+        udpPort.send(packet, this.fakeServerHost);
     }
 
     public void stop() {

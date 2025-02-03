@@ -39,6 +39,13 @@ public class PeerManager implements Id {
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
         this.service = new Host(hubIp, hubServicePort, Protocol.TCP);
         this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
+
+        try {
+            serviceSocket = new Socket();
+            serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
+        } catch (IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
     }
 
     private static List<String> getHubIps(Settings settings) {
@@ -63,9 +70,6 @@ public class PeerManager implements Id {
     public void start() {
         new Thread(() -> {
             try {
-                serviceSocket = new Socket();
-                serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
-
                 BufferedOutputStream out = new BufferedOutputStream(serviceSocket.getOutputStream());
                 String message = this.id + Constants.SEPARATOR + app.getId();
                 out.write(message.getBytes(StandardCharsets.UTF_8));
@@ -110,7 +114,7 @@ public class PeerManager implements Id {
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length);
         proxy.getPortPair().getP2pPort().send(packet, this.registrationServiceHost);
-        Logger.log("Registered on hub: %s", message);
+        Logger.log("Proxy %s state changed: %s", proxy.getId(), message);
     }
 
     @Override

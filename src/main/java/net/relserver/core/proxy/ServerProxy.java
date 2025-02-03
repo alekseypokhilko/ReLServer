@@ -31,6 +31,7 @@ public class ServerProxy extends AbstractProxy {
         } else {
             portPair.getP2pPort().send(packet, remotePeer.getHost());
         }
+        lastP2pPacketSentTime = System.currentTimeMillis();
     }
 
     public void processRequest(DatagramPacket packet) {

@@ -44,11 +44,13 @@ public class ClientRouter extends AbstractProxy {
     public void processRequest(DatagramPacket packet) {
         String key = Host.toId(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP); //todo find more fast solution
         Set<String> proxyIds = this.clientProxyIds.get(key);
-        if (proxyIds != null) {
-            //todo collect and check statistic of proxy packet-per-period and delete not used proxies
-            sendToAllRemoteServers(packet, proxyIds);
-        } else {
+        if (proxyIds == null || proxyIds.isEmpty()) {
             createProxiesForAllRemoteServers(packet, key);
+        } else {
+            sendToAllRemoteServers(packet, proxyIds); //mutates this.clientProxyIds.value() todo remove on proxy disconnect
+            if (proxyIds.isEmpty()) {
+                createProxiesForAllRemoteServers(packet, key);
+            }
         }
     }
 
@@ -57,6 +59,8 @@ public class ClientRouter extends AbstractProxy {
             Proxy proxy = this.proxyRegistry.get(proxyId);
             if (proxy != null) {
                 proxy.processRequest(packet);
+            } else {
+                proxyIds.remove(proxyId); //mutates this.clientProxyIds.value() todo remove on proxy disconnect
             }
         }
     }

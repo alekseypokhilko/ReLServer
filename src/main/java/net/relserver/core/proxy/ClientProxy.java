@@ -43,5 +43,6 @@ public class ClientProxy extends AbstractProxy {
             //from local client -> real remote server
             portPair.getP2pPort().send(packet, remotePeer.getHost());
         }
+        lastP2pPacketSentTime = System.currentTimeMillis();
     }
 }

@@ -1,6 +1,6 @@
 package net.relserver;
 
-import net.relserver.core.hub.HubServer;
+import net.relserver.hub.HubServer;
 import net.relserver.util.TestClient;
 import net.relserver.util.TestServer;
 import net.relserver.util.TestUtils;

@@ -4,7 +4,6 @@ import net.relserver.core.*;
 import net.relserver.core.api.Id;
 import net.relserver.core.app.App;
 import net.relserver.core.api.Proxy;
-import net.relserver.core.hub.HubLoader;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 

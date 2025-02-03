@@ -6,7 +6,7 @@ import net.relserver.core.api.AppCatalog;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortPair;
 import net.relserver.core.proxy.*;
-import net.relserver.core.hub.HubServer;
+import net.relserver.hub.HubServer;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.util.Logger;
 

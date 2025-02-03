@@ -1,4 +1,4 @@
-package net.relserver.core.hub;
+package net.relserver.core.peer;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

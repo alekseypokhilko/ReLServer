@@ -1,4 +1,4 @@
-package net.relserver.core.hub;
+package net.relserver.hub;
 
 import net.relserver.core.Constants;
 import net.relserver.core.api.Id;

@@ -1,8 +1,7 @@
 package net.relserver.core.proxy;
 
 import net.relserver.core.peer.*;
-import net.relserver.core.util.Utils;
-import net.relserver.core.port.PortPair;
+import net.relserver.core.port.UdpPort;
 
 import java.net.DatagramPacket;
 
@@ -11,38 +10,31 @@ import java.net.DatagramPacket;
  */
 public class ClientProxy extends AbstractProxy {
 
-    public ClientProxy(PortPair portPair, PeerPair peerPair, PeerRegistry peerRegistry) {
-        super(portPair, peerPair, peerRegistry);
+    public ClientProxy(UdpPort port, PeerPair peerPair, PeerRegistry peerRegistry) {
+        super(port, peerPair, peerRegistry);
     }
 
-    @Override
-    protected void attachToPorts() {
-        this.portPair.getTargetPort().setOnPacketReceived(this::processRequest);
-        this.portPair.getP2pPort().setOnPacketReceived(this::processResponse);
-    }
-
-    protected void processResponse(DatagramPacket packet) {
-        if (Utils.isHandshake(packet.getData())) {
-            receiveHandshakePacket(packet);
-            return;
-        }
-        //from real remote server -> local client
-        portPair.getTargetPort().send(packet, this.peerPair.getPeer().getHost());
-    }
-
-    public void processRequest(DatagramPacket packet) {
-        if (peerPair.getPeer().getHost() == null) {
-            peerPair.getPeer().setHost(new Host(packet.getAddress(), packet.getPort(), Protocol.UDP));
-        }
-
-        Peer remotePeer = peerPair.getRemotePeer();
-        if (remotePeer.getHost() == null) {
-            updateRemotePeer();
-            sendWithRetry(packet);
+    public void onPacketReceived(DatagramPacket packet) {
+        if (peerPair.isRequestFromPeer(packet.getAddress().getHostAddress(), packet.getPort())) {
+            if (peerPair.getPeer().getHost() == null) {
+                peerPair.getPeer().setHost(new Host(packet.getAddress(), packet.getPort(), Protocol.UDP));
+            }
+            Peer remotePeer = peerPair.getRemotePeer();
+            if (remotePeer.getHost() == null) {
+                updateRemotePeer();
+                sendWithRetry(packet);
+            } else {
+                //from local client -> real remote server
+                port.send(packet, remotePeer.getHost());
+            }
+            lastP2pPacketSentTime = System.currentTimeMillis();
         } else {
-            //from local client -> real remote server
-            portPair.getP2pPort().send(packet, remotePeer.getHost());
+            if (isHandshake(packet.getData())) {
+                receiveHandshakePacket(packet);
+                return;
+            }
+            //from real remote server -> local client
+            port.send(packet, this.peerPair.getPeer().getHost());
         }
-        lastP2pPacketSentTime = System.currentTimeMillis();
     }
 }

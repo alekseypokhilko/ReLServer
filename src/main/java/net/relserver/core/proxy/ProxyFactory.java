@@ -2,7 +2,7 @@ package net.relserver.core.proxy;
 
 import net.relserver.core.peer.*;
 import net.relserver.core.port.PortFactory;
-import net.relserver.core.port.PortPair;
+import net.relserver.core.port.UdpPort;
 
 public class ProxyFactory {
     private final PortFactory portFactory;
@@ -21,18 +21,17 @@ public class ProxyFactory {
     }
 
     public ClientProxy createClientProxy(String clientHostPort, Peer remoteServer) {
-        PeerPair peers = peerFactory.createClientPeerPair(remoteServer);
-        PortPair portPair = portFactory.pair();
-        ClientProxy clientProxy = new ClientProxy(portPair, peers, peerRegistry);
-        clientProxy.getPeerPair().getPeer().setHost(Host.ofId(clientHostPort)); //todo move to peer factory
+        PeerPair peers = peerFactory.createClientPeerPair(clientHostPort, remoteServer);
+        UdpPort port = portFactory.randomPort();
+        ClientProxy clientProxy = new ClientProxy(port, peers, peerRegistry);
         proxyRegistry.add(clientProxy);
         return clientProxy;
     }
 
     public ServerProxy createServerProxy(Peer peerRequest) {
         PeerPair peers = peerFactory.serverPeerPair(localServerIp, peerRequest);
-        PortPair portPair = portFactory.pair();
-        ServerProxy serverProxy = new ServerProxy(portPair, peers, peerRegistry);
+        UdpPort port = portFactory.randomPort();
+        ServerProxy serverProxy = new ServerProxy(port, peers, peerRegistry);
         proxyRegistry.add(serverProxy);
         return serverProxy;
     }

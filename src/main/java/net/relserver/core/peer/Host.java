@@ -3,6 +3,7 @@ package net.relserver.core.peer;
 import java.net.InetAddress;
 
 public final class Host {
+    private static final String HOST_SEPARATOR = ":";
     private final String ip;
     private final int port;
     private final Protocol protocol;
@@ -20,12 +21,12 @@ public final class Host {
     }
 
     public static Host ofId(String id) {
-        String[] tokens = id.split(":");
+        String[] tokens = id.split(HOST_SEPARATOR);
         return new Host(tokens[1], Integer.parseInt(tokens[2]), Protocol.valueOf(tokens[0]));
     }
 
     public static String toId(String ip, int port, Protocol protocol) {
-        return protocol + ":" + ip + ":" + port;
+        return protocol + HOST_SEPARATOR + ip + HOST_SEPARATOR + port;
     }
 
     public String getIp() {
@@ -41,6 +42,6 @@ public final class Host {
     }
 
     public String getId() {
-        return protocol + ":" + ip + ":" + port;
+        return Host.toId(ip, port, protocol);
     }
 }

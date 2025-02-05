@@ -23,14 +23,14 @@ public class PeerFactory {
         return new PeerPair(peer, null);
     }
 
-    public PeerPair createClientPeerPair(Peer remoteServer) {
+    public PeerPair createClientPeerPair(String clientHostPort, Peer remoteServer) {
         String peerId = Id.generateId(Constants.CLIENT_PREFIX);
         String remotePeerId = Id.generateId(Constants.SERVER_PREFIX);
         Peer peer = Peer.of(
                 peerManager.getId(), peerId,
                 State.CONNECTED, Mode.CLIENT,
                 remoteServer.getPeerManagerId(), remotePeerId,
-                app.getId(), null
+                app.getId(), Host.ofId(clientHostPort)
         );
         Peer remotePeer = Peer.of(
                 remoteServer.getPeerManagerId(), remotePeerId,

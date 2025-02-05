@@ -4,7 +4,7 @@ import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.api.AppCatalog;
 import net.relserver.core.peer.*;
-import net.relserver.core.port.PortPair;
+import net.relserver.core.port.UdpPort;
 import net.relserver.core.proxy.*;
 import net.relserver.hub.HubServer;
 import net.relserver.core.port.PortFactory;
@@ -62,19 +62,19 @@ public class ReLServer {
     }
 
     private void createClient() {
-        PortPair portPair = portFactory.clientRouterPair();
+        UdpPort port = portFactory.appPort();
         PeerPair peerPair = peerFactory.clientRouterPeer();
-        client = new ClientRouter(proxyFactory, portPair, peerPair, peerRegistry, proxyRegistry);
+        client = new ClientRouter(proxyFactory, port, peerPair, peerRegistry, proxyRegistry);
         peerRegistry.subscribeOnRemotePeerChanged(client::onPeerChanged);
-        peerManager.notifyPeerState(client, State.CONNECTED);
+        peerManager.notifyPeerState(client.getPeer(), State.CONNECTED, client.getPort());
     }
 
     private void createServer() {
-        PortPair portPair = portFactory.serverRouterPair();
+        UdpPort port = portFactory.randomPort();
         PeerPair peerPair = peerFactory.serverRouterPeer();
-        server = new ServerRouter(portPair, peerPair, proxyFactory, peerRegistry, proxyRegistry);
+        server = new ServerRouter(port, peerPair, proxyFactory, peerRegistry, proxyRegistry);
         peerRegistry.subscribeOnRemotePeerChanged(server::onPeerChanged);
-        peerManager.notifyPeerState(server, State.CONNECTED);
+        peerManager.notifyPeerState(server.getPeer(), State.CONNECTED, server.getPort());
     }
 
     //todo proper order

@@ -1,8 +1,8 @@
 package net.relserver.core.proxy;
 
+import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
 import net.relserver.core.peer.*;
-import net.relserver.core.port.PortPair;
 import net.relserver.core.api.Proxy;
 
 import java.net.DatagramPacket;
@@ -21,17 +21,11 @@ public class ClientRouter extends AbstractProxy {
     //host <-> proxyIds todo Map<Host, Set<String>>
     private final Map<String, Set<String>> clientProxyIds = new ConcurrentHashMap<>();
 
-    public ClientRouter(ProxyFactory proxyFactory, PortPair portPair, PeerPair peerPair,
+    public ClientRouter(ProxyFactory proxyFactory, UdpPort port, PeerPair peerPair,
                         PeerRegistry peerRegistry, ProxyRegistry proxyRegistry) {
-        super(portPair, peerPair, peerRegistry);
+        super(port, peerPair, peerRegistry);
         this.proxyFactory = proxyFactory;
         this.proxyRegistry = proxyRegistry;
-    }
-
-    @Override
-    protected void attachToPorts() {
-        this.portPair.getP2pPort().setOnPacketReceived(this::processResponse);
-        this.portPair.getTargetPort().setOnPacketReceived(this::processRequest);
     }
 
     public void onPeerChanged(Peer peer) {
@@ -41,15 +35,19 @@ public class ClientRouter extends AbstractProxy {
         }
     }
 
-    public void processRequest(DatagramPacket packet) {
-        String key = Host.toId(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP); //todo find more fast solution
-        Set<String> proxyIds = this.clientProxyIds.get(key);
+    public void onPacketReceived(DatagramPacket packet) {
+        if (isHandshake(packet.getData())) {
+            return; //todo
+        }
+        //todo remove clientProxyIds. iterate proxyRegistry
+        String clientHostPort = Host.toId(packet.getAddress().getHostAddress(), packet.getPort(), Protocol.UDP); //todo find more fast solution
+        Set<String> proxyIds = this.clientProxyIds.get(clientHostPort);
         if (proxyIds == null || proxyIds.isEmpty()) {
-            createProxiesForAllRemoteServers(packet, key);
+            createProxiesForAllRemoteServers(packet, clientHostPort);
         } else {
             sendToAllRemoteServers(packet, proxyIds); //mutates this.clientProxyIds.value() todo remove on proxy disconnect
             if (proxyIds.isEmpty()) {
-                createProxiesForAllRemoteServers(packet, key);
+                createProxiesForAllRemoteServers(packet, clientHostPort);
             }
         }
     }
@@ -58,7 +56,7 @@ public class ClientRouter extends AbstractProxy {
         for (String proxyId : proxyIds) {
             Proxy proxy = this.proxyRegistry.get(proxyId);
             if (proxy != null) {
-                proxy.processRequest(packet);
+                proxy.onPacketReceived(packet);
             } else {
                 proxyIds.remove(proxyId); //mutates this.clientProxyIds.value() todo remove on proxy disconnect
             }
@@ -72,18 +70,14 @@ public class ClientRouter extends AbstractProxy {
         }
     }
 
-    private void createProxiesForAllRemoteServers(DatagramPacket packet, String key) {
-        this.clientProxyIds.put(key, new CopyOnWriteArraySet<>());
+    private void createProxiesForAllRemoteServers(DatagramPacket packet, String clientHostPort) {
+        this.clientProxyIds.put(clientHostPort, new CopyOnWriteArraySet<>());
         for (Peer peer : this.peerRegistry.getAll().values()) {
             if (peer.isRouter() && Mode.SERVER == peer.getMode()) {
-                ClientProxy clientProxy = createProxy(key, peer);
+                ClientProxy clientProxy = createProxy(clientHostPort, peer);
                 clientProxy.sendWithRetry(packet);
             }
         }
-    }
-
-    protected void processResponse(DatagramPacket packet) {
-        Logger.logPacket(portPair.getP2pPort().getId(), packet, false);
     }
 
     public ClientProxy createProxy(String clientHostPort, Peer remoteServer) {

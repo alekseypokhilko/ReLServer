@@ -3,7 +3,7 @@ package net.relserver.core.peer;
 import net.relserver.core.*;
 import net.relserver.core.api.Id;
 import net.relserver.core.app.App;
-import net.relserver.core.api.Proxy;
+import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 
@@ -105,15 +105,13 @@ public class PeerManager implements Id {
         }
     }
 
-    public void notifyPeerState(Proxy proxy, State state) {
-        Peer peer = proxy.getPeerPair().getPeer();
+    public void notifyPeerState(Peer peer, State state, UdpPort port) {
         peer.setState(state);
         String message = Utils.toJson(peer);
-
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length);
-        proxy.getPortPair().getP2pPort().send(packet, this.registrationServiceHost);
-        Logger.log("Proxy %s state changed: %s", proxy.getId(), message);
+        port.send(packet, this.registrationServiceHost);
+        Logger.log("Proxy %s state changed: %s", peer.getId(), message);
     }
 
     @Override

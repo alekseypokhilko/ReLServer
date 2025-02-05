@@ -1,44 +1,60 @@
 package net.relserver.core.proxy;
 
+import net.relserver.core.Constants;
 import net.relserver.core.api.Proxy;
 import net.relserver.core.peer.*;
-import net.relserver.core.port.PortPair;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
-import net.relserver.core.util.Utils;
 
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class AbstractProxy implements Proxy {
-    protected final PortPair portPair;
+    protected final UdpPort port;
     protected final PeerPair peerPair;
     protected final PeerRegistry peerRegistry;
     protected State state = State.DISCONNECTED;
     protected long lastP2pPacketSentTime = System.currentTimeMillis();
 
-    public AbstractProxy(PortPair portPair, PeerPair peerPair, PeerRegistry peerRegistry) {
+    public AbstractProxy(UdpPort port, PeerPair peerPair, PeerRegistry peerRegistry) {
         this.peerRegistry = peerRegistry;
-        this.portPair = portPair;
+        this.port = port;
         this.peerPair = peerPair;
 
         attachToPorts();
-        Logger.log(
-                "Proxy %s started with ports: p2p=%s, target=%s",
-                peerPair.getPeer(),
-                portPair.getP2pPort().getId(),
-                this.portPair.getTargetPort() == null ? null : this.portPair.getTargetPort().getId()
-        );
+        Logger.log("Proxy %s started with port: p2p=%s", peerPair.getPeer(), port.getId());
     }
 
-    protected abstract void attachToPorts();
-
-    protected abstract void processResponse(DatagramPacket packet);
-
-    public abstract void processRequest(DatagramPacket packet);
+    protected void attachToPorts() {
+        this.port.setOnPacketReceived(this::onPacketReceived);
+    }
 
     public void sendWithRetry(DatagramPacket packet) {
-        Utils.sendWithRetry(portPair.getP2pPort(), packet, peerPair.getRemotePeer(), 10, 100L, peerRegistry::get);
+        CompletableFuture.runAsync(() -> {
+            //String message = new String(packet.getData()).trim(); //debug
+            int count = 0;
+            while (!Thread.interrupted()) {
+                //packets can reach their destination after receiving information about the remote proxy
+                Peer actual = peerRegistry.get(peerPair.getRemotePeer().getId());
+
+                try {
+                    port.send(packet, actual.getHost());
+                    break;
+                } catch (Exception e) {
+                    try {
+                        Thread.sleep(200L); //todo
+                    } catch (Exception ignore) {
+                        break;
+                    }
+                }
+                count++;
+                if (count > 10) { //todo
+                    Logger.log("Not found a remote peer. Retry limit exceeds for sending to: %s", actual);
+                    break;
+                }
+            }
+        });
     }
 
     protected void updateRemotePeer() {
@@ -84,7 +100,7 @@ public abstract class AbstractProxy implements Proxy {
         byte[] senData = msg.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(senData, senData.length);
         if (remotePeer.getHost() != null) {
-            getPortPair().getP2pPort().send(packet, remotePeer.getHost());
+            getPort().send(packet, remotePeer.getHost());
         }
     }
 
@@ -101,13 +117,13 @@ public abstract class AbstractProxy implements Proxy {
     }
 
     @Override
-    public PeerPair getPeerPair() {
-        return peerPair;
+    public Peer getPeer() {
+        return peerPair.getPeer();
     }
 
     @Override
-    public PortPair getPortPair() {
-        return portPair;
+    public UdpPort getPort() {
+        return port;
     }
 
     @Override
@@ -122,10 +138,13 @@ public abstract class AbstractProxy implements Proxy {
 
     @Override
     public void stop() {
-        portPair.getP2pPort().close();
-        UdpPort targetPort = portPair.getTargetPort();
-        if (targetPort != null) {
-            targetPort.close();
-        }
+        port.close();
+    }
+
+    protected boolean isHandshake(byte[] packetData) {
+        return packetData.length > 3
+                && packetData[0] == Constants.HANDSHAKE_PREFIX_BYTES[0]
+                && packetData[1] == Constants.HANDSHAKE_PREFIX_BYTES[1]
+                && packetData[2] == Constants.HANDSHAKE_PREFIX_BYTES[2];
     }
 }

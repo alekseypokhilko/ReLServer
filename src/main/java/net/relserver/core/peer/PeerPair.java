@@ -20,4 +20,9 @@ public class PeerPair {
     public void setRemotePeer(Peer remotePeer) {
         this.remotePeer = remotePeer;
     }
+
+    public boolean isRequestFromPeer(String hostAddress, int port) {
+        Host host = peer.getHost();
+        return host.getIp().equals(hostAddress) && host.getPort() == port;
+    }
 }

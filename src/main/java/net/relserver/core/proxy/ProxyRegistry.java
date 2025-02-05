@@ -5,10 +5,8 @@ import net.relserver.core.peer.Peer;
 import net.relserver.core.peer.PeerManager;
 import net.relserver.core.peer.State;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +24,7 @@ public class ProxyRegistry {
 
     public void add(Proxy proxy) {
         registry.put(proxy.getId(), proxy);
-        peerManager.notifyPeerState(proxy, State.CONNECTED);
+        peerManager.notifyPeerState(proxy.getPeer(), State.CONNECTED, proxy.getPort());
     }
 
     public Proxy get(String proxyId) {
@@ -39,7 +37,7 @@ public class ProxyRegistry {
     public String remove(String id) {
         Proxy proxy = registry.remove(id);
         if (proxy != null) {
-            peerManager.notifyPeerState(proxy, State.DISCONNECTED);
+            peerManager.notifyPeerState(proxy.getPeer(), State.DISCONNECTED, proxy.getPort());
             proxy.stop();
             return proxy.getId();
         }
@@ -62,17 +60,14 @@ public class ProxyRegistry {
         }
     }
 
-    public Set<String> onPeerDisconnected(Peer peer) {
+    public void onPeerDisconnected(Peer peer) {
         Iterator<Map.Entry<String, Proxy>> proxyIterator = registry.entrySet().iterator();
-        Set<String> ids = new HashSet<>();
         while (proxyIterator.hasNext()) {
             Proxy proxy = proxyIterator.next().getValue();
             if (proxy.getRemotePeer().getPeerManagerId().equals(peer.getPeerManagerId())) {
                 remove(proxy.getId());
-                ids.add(proxy.getId());
             }
         }
-        return ids;
     }
 
     private void managementLoop() {
@@ -90,7 +85,7 @@ public class ProxyRegistry {
     }
 
     private void removeIfNotUsed(Proxy proxy) {
-        if (!proxy.getPeerPair().getPeer().isRouter()
+        if (!proxy.getPeer().isRouter()
                 && State.CONNECTED == proxy.getState()
                 && System.currentTimeMillis() - proxy.getLastP2pPacketSentTime() > TimeUnit.MINUTES.toMillis(5)) {
             //todo move duration to settings
@@ -100,7 +95,7 @@ public class ProxyRegistry {
     }
 
     private void sendHandshakeIfNeeded(Proxy proxy) {
-        if (!proxy.getPeerPair().getPeer().isRouter() && State.DISCONNECTED == proxy.getState()) {
+        if (!proxy.getPeer().isRouter() && State.DISCONNECTED == proxy.getState()) {
             proxy.sendHandshakePacket(null);
         }
     }

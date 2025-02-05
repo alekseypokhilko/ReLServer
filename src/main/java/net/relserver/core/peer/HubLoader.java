@@ -20,7 +20,11 @@ public class HubLoader {
     public static List<String> loadFromRemoteRepository() {
         try {
             String response = APIClient.fetchConfig(ConfigApi::hubs);
-            return new Gson().fromJson(response, HUBS_TYPE);
+            if (response == null) {
+                return new ArrayList<>();
+            }
+            List<String> hubs = new Gson().fromJson(response, HUBS_TYPE);
+            return hubs == null ? new ArrayList<>() : hubs;
         } catch (Exception e) {
             Logger.log("Cannot load hub hosts file from remote: %s", e.getMessage());
         }
@@ -35,7 +39,7 @@ public class HubLoader {
         ) {
             return new Gson().fromJson(reader, HUBS_TYPE);
         } catch (Exception e) {
-            Logger.log("Cannot read applications.json file: %s", e.getMessage());
+            Logger.log("Cannot read hubs.json file: %s", e.getMessage());
         }
         return new ArrayList<>();
     }

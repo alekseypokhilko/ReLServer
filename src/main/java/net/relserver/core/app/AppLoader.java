@@ -21,7 +21,11 @@ public final class AppLoader {
     public static List<App> loadFromRemoteRepository() {
         try {
             String response = APIClient.fetchConfig(ConfigApi::applications);
-            return new Gson().fromJson(response, APP_LIST_TYPE);
+            if (response == null) {
+                return new ArrayList<>();
+            }
+            List<App> apps = new Gson().fromJson(response, APP_LIST_TYPE);
+            return apps == null ? new ArrayList<>() : apps;
         } catch (Exception e) {
             Logger.log("Cannot read applications.json file from remote: %s", e.getMessage());
         }

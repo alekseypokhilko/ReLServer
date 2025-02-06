@@ -3,15 +3,12 @@ package net.relserver;
 import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.api.AppCatalog;
-import net.relserver.core.app.DefaultAppCatalog;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.proxy.*;
 import net.relserver.hub.Hub;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.util.Logger;
-
-import java.io.IOException;
 
 //todo exception handling
 //todo fix thread busy waiting
@@ -29,7 +26,7 @@ public class ReLServer {
     private ClientRouter client;
     private ServerRouter server;
 
-    public ReLServer(Settings settings) {
+    public ReLServer(Settings settings, AppCatalog appCatalog) {
         Logger.init(settings);
         Logger.log("Starting ReLServer with settings: %s", settings);
         Mode mode = settings.getMode();
@@ -38,8 +35,8 @@ public class ReLServer {
             return;
         }
 
-        appCatalog = new DefaultAppCatalog(settings);
-        App app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
+        this.appCatalog = appCatalog;
+        App app = this.appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
         Logger.log("Selected app: %s", app);
 
         peerRegistry = new PeerRegistry(app);

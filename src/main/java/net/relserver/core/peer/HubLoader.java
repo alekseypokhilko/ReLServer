@@ -1,6 +1,7 @@
 package net.relserver.core.peer;
 
 import com.google.gson.reflect.TypeToken;
+import net.relserver.core.Settings;
 import net.relserver.core.http.APIClient;
 import net.relserver.core.http.ConfigApi;
 import net.relserver.core.util.Logger;
@@ -41,5 +42,24 @@ public class HubLoader {
             Logger.log("Cannot read hubs.json file: %s", e.getMessage());
         }
         return new ArrayList<>();
+    }
+
+    public static List<String> getHubIps(Settings settings) {
+        String hubIp = settings.getString(Settings.hubIp);
+        List<String> remoteIps;
+        List<String> resourceIps;
+        if (hubIp != null && !hubIp.isEmpty()) {
+            ArrayList<String> ip = new ArrayList<>();
+            ip.add(hubIp);
+            return ip;
+        } else if (!(remoteIps = loadFromRemoteRepository()).isEmpty()) {
+            return remoteIps;
+        } else if (!(resourceIps = loadFromResourcesFolder()).isEmpty()) {
+            return resourceIps;
+        } else {
+            ArrayList<String> localhostHub = new ArrayList<>();
+            localhostHub.add("127.0.0.1");
+            return localhostHub;
+        }
     }
 }

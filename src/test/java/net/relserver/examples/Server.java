@@ -14,7 +14,7 @@ public class Server {
                 "-mode=server",
                 "-appId=" + appId,
                 "-localServerIp=" + localServerIp,
-//                "-log=true",
+                "-log=true",
 //                "-logPacket=true",
 //                "-hubIp=" + hubIp,
 //                "-appPort=" + port

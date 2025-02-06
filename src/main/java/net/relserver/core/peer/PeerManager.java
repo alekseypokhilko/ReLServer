@@ -4,15 +4,15 @@ import net.relserver.core.*;
 import net.relserver.core.api.Id;
 import net.relserver.core.api.model.Operation;
 import net.relserver.core.api.model.PeerManagerRegistrationRequest;
+import net.relserver.core.api.model.Request;
 import net.relserver.core.app.App;
+import net.relserver.core.http.SocketRequest;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PeerManager implements Id {
     private final String id;
@@ -21,43 +21,21 @@ public class PeerManager implements Id {
     private final Host service;
     private final Host registrationServiceHost;
     private final App app;
+    Settings settings;
 
     public PeerManager(Settings settings, App app, PeerRegistry peerRegistry) {
         this.id = Id.generateId(Constants.PEER_MANAGER_PREFIX);
         this.peerRegistry = peerRegistry;
         this.app = app;
+        this.settings = settings;
 
-        List<String> hubIps = getHubIps(settings);
-        if (hubIps.isEmpty()) {
-            throw new IllegalArgumentException("Cannot find Hub to connect");
-        }
-
-        String hubIp = hubIps.get(0);
+        String hubIp = HubLoader.getHubIps(settings).get(0);
         int hubServicePort = settings.getInt(Settings.hubServicePort);
         int hubRegistrationPort = settings.getInt(Settings.hubRegistrationPort);
         this.service = new Host(hubIp, hubServicePort, Protocol.TCP);
         this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
 
         client = new PeerManagerClient();
-    }
-
-    private static List<String> getHubIps(Settings settings) {
-        String hubIp = settings.getString(Settings.hubIp);
-        List<String> remoteIps;
-        List<String> resourceIps;
-        if (hubIp != null && !hubIp.isEmpty()) {
-            ArrayList<String> ip = new ArrayList<>();
-            ip.add(hubIp);
-            return ip;
-        } else if (!(remoteIps = HubLoader.loadFromRemoteRepository()).isEmpty()) {
-            return remoteIps;
-        } else if (!(resourceIps = HubLoader.loadFromResourcesFolder()).isEmpty()) {
-            return resourceIps;
-        } else {
-            ArrayList<String> localhostHub = new ArrayList<>();
-            localhostHub.add("127.0.0.1");
-            return localhostHub;
-        }
     }
 
     public void start() {
@@ -105,6 +83,11 @@ public class PeerManager implements Id {
     }
 
     public void stop() {
+        SocketRequest.execute(
+                HubLoader.getHubIps(settings).get(0), //todo remove static
+                settings.getInt(Settings.hubServicePort),
+                new Request(Operation.DISCONNECT_PEER_MANAGER, Utils.toJson(new PeerManagerRegistrationRequest(getId(), app.getId())))
+        );
         client.stop();
     }
 }

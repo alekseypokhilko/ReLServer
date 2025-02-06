@@ -5,7 +5,8 @@ import net.relserver.core.util.Logger;
 import net.relserver.core.Settings;
 import net.relserver.core.peer.*;
 import net.relserver.hub.handler.AppStatsHandler;
-import net.relserver.hub.handler.PeerManagerHandler;
+import net.relserver.hub.handler.DisconnectPeerManagerHandler;
+import net.relserver.hub.handler.RegisterPeerManagerHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,8 @@ public class Hub {
 
         try {
             socketServer = new SocketServer(servicePort);
-            socketServer.registerHandler(new PeerManagerHandler(clientRegistry, peerRegistry));
+            socketServer.registerHandler(new RegisterPeerManagerHandler(clientRegistry, peerRegistry));
+            socketServer.registerHandler(new DisconnectPeerManagerHandler(peerRegistry));
             socketServer.registerHandler(new AppStatsHandler(peerRegistry));
             socketServer.start();
         } catch (Exception e) {

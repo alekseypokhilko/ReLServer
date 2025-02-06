@@ -1,7 +1,7 @@
 package net.relserver;
 
-import net.relserver.core.api.AppCatalog;
 import net.relserver.core.Settings;
+import net.relserver.core.api.AppCatalog;
 import net.relserver.core.app.DefaultAppCatalog;
 
 public class ReLServerCliRunner {
@@ -11,6 +11,7 @@ public class ReLServerCliRunner {
 
     public static ReLServer of(String[] args) {
         Settings settings = new Settings(args);
-        return new ReLServer(settings);
+        AppCatalog appCatalog = new DefaultAppCatalog(settings);
+        return new ReLServer(settings, appCatalog);
     }
 }

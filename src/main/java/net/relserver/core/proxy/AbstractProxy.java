@@ -106,7 +106,7 @@ public abstract class AbstractProxy implements Proxy {
 
     @Override
     public void setRemotePeer(Peer remotePeer) {
-        Logger.log("Proxy %s changed remote peer from %s to %s", getId(), peerPair.getRemotePeer(), remotePeer);
+        Logger.log("Proxy %s changed remote peer to %s", getId(), remotePeer);
         this.peerPair.setRemotePeer(remotePeer);
         this.sendHandshakePacket(remotePeer);
     }

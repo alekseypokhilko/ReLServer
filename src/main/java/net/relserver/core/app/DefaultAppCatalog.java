@@ -7,8 +7,10 @@ import net.relserver.core.api.model.AppStat;
 import net.relserver.core.api.model.Operation;
 import net.relserver.core.api.model.Request;
 import net.relserver.core.http.SocketRequest;
+import net.relserver.core.peer.HubLoader;
 import net.relserver.core.util.Utils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,11 +41,12 @@ public class DefaultAppCatalog implements AppCatalog {
 
     public Map<String, AppStat> getAppStats() {
         String response = SocketRequest.execute(
-                settings.getString(Settings.hubIp),
+                HubLoader.getHubIps(settings).get(0), //todo remove static
                 settings.getInt(Settings.hubServicePort),
                 new Request(Operation.GET_APP_STATS, null)
         );
-        return Utils.fromJson(response, APP_STATS_TYPE);
+        Map<String, AppStat> stats = Utils.fromJson(response, APP_STATS_TYPE);
+        return stats == null ? new HashMap<>() : stats;
     }
 
     public List<App> getApps() {

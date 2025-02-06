@@ -5,15 +5,12 @@ import net.relserver.core.api.model.PeerManagerRegistrationRequest;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 import net.relserver.hub.Client;
-import net.relserver.hub.ClientRegistry;
 import net.relserver.hub.PeerRegistry;
 
-public class PeerManagerHandler implements RequestHandler {
-    private final ClientRegistry clientRegistry;
+public class DisconnectPeerManagerHandler implements RequestHandler {
     private final PeerRegistry peerRegistry;
 
-    public PeerManagerHandler(ClientRegistry clientRegistry, PeerRegistry peerRegistry) {
-        this.clientRegistry = clientRegistry;
+    public DisconnectPeerManagerHandler(PeerRegistry peerRegistry) {
         this.peerRegistry = peerRegistry;
     }
 
@@ -22,14 +19,13 @@ public class PeerManagerHandler implements RequestHandler {
         PeerManagerRegistrationRequest request = Utils.fromJson(message, PeerManagerRegistrationRequest.class);
         client.setPeerManagerId(request.getPmId());
         client.setAppId(request.getAppId());
-        client.setOnStop(peerRegistry::onPeerManagerDisconnects);
-        clientRegistry.add(client);
-        peerRegistry.sendAllPeers(client);
-        Logger.log("Peer manager %s connected: appId=%s host=%s", client.getPeerManagerId(), client.getAppId(), client.getHostId());
+        client.sendMessage(Operation.DISCONNECT_PEER_MANAGER.name());
+        peerRegistry.onPeerManagerDisconnects(client);
+        Logger.log("Peer manager %s disconnected: appId=%s host=%s", client.getPeerManagerId(), client.getAppId(), client.getHostId());
     }
 
     @Override
     public Operation getOperation() {
-        return Operation.REGISTER_PEER_MANAGER;
+        return Operation.DISCONNECT_PEER_MANAGER;
     }
 }

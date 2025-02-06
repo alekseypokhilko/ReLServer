@@ -23,12 +23,6 @@ public class ServerRouter extends AbstractProxy {
 
     public void onPeerChanged(Peer peer) {
         if (State.CONNECTED == peer.getState()
-                && peer.isRouter()
-                && Mode.CLIENT == peer.getMode()) {
-            sendHandshakePacket(peer);
-        }
-
-        if (State.CONNECTED == peer.getState()
                 && Mode.CLIENT == peer.getMode()
                 && peerPair.getPeer().getAppId().equals(peer.getAppId())
                 && !peer.isRouter()

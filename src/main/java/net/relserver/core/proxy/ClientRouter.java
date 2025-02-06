@@ -29,8 +29,9 @@ public class ClientRouter extends AbstractProxy {
     }
 
     public void onPeerChanged(Peer peer) {
-        if (State.DISCONNECTED != peer.getState() && peer.isRouter() && Mode.SERVER == peer.getMode()) {
-            sendHandshakePacket(peer);
+        if (State.CONNECTED == peer.getState()
+                && peer.isRouter()
+                && Mode.SERVER == peer.getMode()) {
             createProxyForAllClients(peer);
         }
     }

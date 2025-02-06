@@ -2,22 +2,21 @@ package net.relserver.core.peer;
 
 import net.relserver.core.*;
 import net.relserver.core.api.Id;
+import net.relserver.core.api.model.Operation;
+import net.relserver.core.api.model.PeerManagerRegistrationRequest;
 import net.relserver.core.app.App;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.util.Logger;
 import net.relserver.core.util.Utils;
 
-import java.io.*;
 import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PeerManager implements Id {
     private final String id;
-    private Socket serviceSocket;
+    private final PeerManagerClient client;
     private final PeerRegistry peerRegistry;
     private final Host service;
     private final Host registrationServiceHost;
@@ -39,12 +38,7 @@ public class PeerManager implements Id {
         this.service = new Host(hubIp, hubServicePort, Protocol.TCP);
         this.registrationServiceHost = new Host(hubIp, hubRegistrationPort, Protocol.UDP);
 
-        try {
-            serviceSocket = new Socket();
-            serviceSocket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
-        } catch (IOException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
+        client = new PeerManagerClient();
     }
 
     private static List<String> getHubIps(Settings settings) {
@@ -67,26 +61,16 @@ public class PeerManager implements Id {
     }
 
     public void start() {
-        new Thread(() -> {
-            try {
-                BufferedOutputStream out = new BufferedOutputStream(serviceSocket.getOutputStream());
-                String message = this.id + Constants.SEPARATOR + app.getId();
-                out.write(message.getBytes(StandardCharsets.UTF_8));
-                out.write(Constants.NEW_LINE);
-                out.flush();
-
-                BufferedReader in = new BufferedReader(new InputStreamReader(serviceSocket.getInputStream()));
-                while (!Thread.interrupted()) {
-                    String peerInfo = in.readLine();
-                    if (peerInfo != null) {
-                        Logger.log("Peer manager %s received peer: %s", id, peerInfo);
-                        receiveRemotePeer(peerInfo);
-                    }
-                }
-            } catch (Exception e) {
-                Logger.log("Disconnected from Hub: %s", e.getMessage()); //todo throw from main thread
-            }
-        }, "peerInfoReceiver-" + this.id).start();
+        try {
+            client.startConnection(service);
+            String message = Utils.createRequest(Operation.REGISTER_PEER_MANAGER, new PeerManagerRegistrationRequest(getId(), app.getId()));
+            client.sendMessage(message);
+            client.subscribeOnPeers(this::receiveRemotePeer);
+        } catch (Exception e) {
+            Logger.log("Disconnected from Hub: %s", e.getMessage()); //todo throw from main thread
+            client.stop();
+            throw new IllegalStateException(e.getMessage(), e);
+        }
         Logger.log("Peer manager %s started with app=%s", id, app);
     }
 
@@ -94,6 +78,7 @@ public class PeerManager implements Id {
         if (peerInfo == null || peerInfo.isEmpty()) {
             return;
         }
+        Logger.log("Peer manager %s received peer: %s", id, peerInfo);
         try {
             Peer peer = Utils.fromJson(peerInfo, Peer.class);
             if (!app.getId().equals(peer.getAppId()) && !(!peer.isRouter() && id.equals(peer.getPeerManagerId()))) {
@@ -120,12 +105,6 @@ public class PeerManager implements Id {
     }
 
     public void stop() {
-        try {
-            if (serviceSocket != null) {
-                serviceSocket.close();
-            }
-        } catch (Exception e) {
-            Logger.log("Exception while closing service socket: %s", e.getMessage());
-        }
+        client.stop();
     }
 }

@@ -11,7 +11,6 @@ public class ReLServerCliRunner {
 
     public static ReLServer of(String[] args) {
         Settings settings = new Settings(args);
-        AppCatalog appCatalog = new DefaultAppCatalog();
-        return new ReLServer(settings, appCatalog);
+        return new ReLServer(settings);
     }
 }

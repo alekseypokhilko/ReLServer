@@ -1,6 +1,7 @@
 package net.relserver;
 
-import net.relserver.hub.HubServer;
+import net.relserver.core.api.model.AppStat;
+import net.relserver.hub.Hub;
 import net.relserver.util.TestClient;
 import net.relserver.util.TestServer;
 import net.relserver.util.TestUtils;
@@ -15,15 +16,7 @@ public class ManyClientsAndManyServersTest {
 
     public static void main(String[] args) throws Exception {
         String log = "-log=true";
-        HubServer hub = ReLServerCliRunner.of(new String[]{"-mode=hub", log}).getHub();
-
-        int clientPort = 30000;
-        List<TestClient> clients = new ArrayList<>();
-        ReLServer clientRouter = ReLServerCliRunner.of(new String[]{"-mode=client", log, "-hubIp=127.0.0.1", "-appPort=" + clientPort});
-        for (int i = 0; i < CLIENT_COUNT; i++) {
-            Thread.sleep(100L);
-            clients.add(TestUtils.createClient("client" + i, clientPort, 1));
-        }
+        Hub hub = ReLServerCliRunner.of(new String[]{"-mode=hub", log}).getHub();
 
         List<ReLServer> serverRouters = new ArrayList<>();
         List<TestServer> fakeServers = new ArrayList<>();
@@ -35,11 +28,19 @@ public class ManyClientsAndManyServersTest {
             serverRouters.add(server);
         }
 
-
+        int clientPort = 30000;
+        List<TestClient> clients = new ArrayList<>();
+        ReLServer clientRouter = ReLServerCliRunner.of(new String[]{"-mode=client", log, "-hubIp=127.0.0.1", "-appPort=" + clientPort});
+        for (int i = 0; i < CLIENT_COUNT; i++) {
+            Thread.sleep(100L);
+            clients.add(TestUtils.createClient("client" + i, clientPort, 1));
+        }
 
         Thread.sleep(9000L);
         Map<String, Object> stats = hub.getStats();
         System.out.println("HUB: " + stats);
+        Map<String, AppStat> appStats = clientRouter.getAppCatalog().getAppStats();
+        System.out.println("App stats: " + appStats);
 
         int successedTests = 0;
         int failedTests = 0;

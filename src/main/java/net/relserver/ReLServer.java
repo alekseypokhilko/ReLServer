@@ -3,10 +3,11 @@ package net.relserver;
 import net.relserver.core.*;
 import net.relserver.core.app.App;
 import net.relserver.core.api.AppCatalog;
+import net.relserver.core.app.DefaultAppCatalog;
 import net.relserver.core.peer.*;
 import net.relserver.core.port.UdpPort;
 import net.relserver.core.proxy.*;
-import net.relserver.hub.HubServer;
+import net.relserver.hub.Hub;
 import net.relserver.core.port.PortFactory;
 import net.relserver.core.util.Logger;
 
@@ -15,7 +16,7 @@ import java.io.IOException;
 //todo exception handling
 //todo fix thread busy waiting
 public class ReLServer {
-    private App app;
+    private AppCatalog appCatalog;
     private PeerRegistry peerRegistry;
     private ProxyRegistry proxyRegistry;
     private PeerManager peerManager;
@@ -24,20 +25,21 @@ public class ReLServer {
     private ProxyFactory proxyFactory;
 
 
-    private HubServer hub;
+    private Hub hub;
     private ClientRouter client;
     private ServerRouter server;
 
-    public ReLServer(Settings settings, AppCatalog appCatalog) {
+    public ReLServer(Settings settings) {
         Logger.init(settings);
         Logger.log("Starting ReLServer with settings: %s", settings);
         Mode mode = settings.getMode();
         if (Mode.HUB == mode) {
-            hub = new HubServer(settings);
+            hub = new Hub(settings);
             return;
         }
 
-        this.app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
+        appCatalog = new DefaultAppCatalog(settings);
+        App app = appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
         Logger.log("Selected app: %s", app);
 
         peerRegistry = new PeerRegistry(app);
@@ -80,11 +82,7 @@ public class ReLServer {
     //todo proper order
     public void stop() {
         if (hub != null) {
-            try {
-                hub.stop();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            hub.stop();
         }
         if (client != null) {
             client.stop();
@@ -99,7 +97,7 @@ public class ReLServer {
         proxyRegistry.stop();
     }
 
-    public HubServer getHub() {
+    public Hub getHub() {
         return hub;
     }
 
@@ -109,5 +107,9 @@ public class ReLServer {
 
     public ServerRouter getServer() {
         return server;
+    }
+
+    public AppCatalog getAppCatalog() {
+        return appCatalog;
     }
 }

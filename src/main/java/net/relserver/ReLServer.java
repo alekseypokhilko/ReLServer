@@ -27,37 +27,42 @@ public class ReLServer {
     private ServerRouter server;
 
     public ReLServer(Settings settings, AppCatalog appCatalog) {
-        Logger.init(settings);
-        Logger.log("Starting ReLServer with settings: %s", settings);
-        Mode mode = settings.getMode();
-        if (Mode.HUB == mode) {
-            hub = new Hub(settings);
-            return;
+        try {
+            Logger.init(settings);
+            Logger.log("Starting ReLServer with settings: %s", settings);
+            Mode mode = settings.getMode();
+            if (Mode.HUB == mode) {
+                hub = new Hub(settings);
+                return;
+            }
+
+            this.appCatalog = appCatalog;
+            App app = this.appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
+            Logger.log("Selected app: %s", app);
+
+            peerRegistry = new PeerRegistry(app);
+            peerManager = new PeerManager(settings, app, peerRegistry);
+            proxyRegistry = new ProxyRegistry(peerManager);
+            peerFactory = new PeerFactory(app, peerManager);
+            portFactory = new PortFactory(app, settings);
+            proxyFactory = new ProxyFactory(portFactory, peerFactory, settings.getLocalServerIp(), peerRegistry, proxyRegistry);
+
+            peerRegistry.subscribeOnRemotePeerChanged(proxyRegistry::updateProxyRemotePeer);
+
+            if (Mode.CLIENT_SERVER == mode) {
+                createClient();
+                createServer();
+            } else if (Mode.CLIENT == mode) {
+                createClient();
+            } else if (Mode.SERVER == mode) {
+                createServer();
+            }
+
+            peerManager.start();
+        } catch (Exception e) {
+            stop();
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        this.appCatalog = appCatalog;
-        App app = this.appCatalog.getApp(settings.getString(Settings.appId), settings.getInt(Settings.appPort));
-        Logger.log("Selected app: %s", app);
-
-        peerRegistry = new PeerRegistry(app);
-        peerManager = new PeerManager(settings, app, peerRegistry);
-        proxyRegistry = new ProxyRegistry(peerManager);
-        peerFactory = new PeerFactory(app, peerManager);
-        portFactory = new PortFactory(app, settings);
-        proxyFactory = new ProxyFactory(portFactory, peerFactory, settings.getLocalServerIp(), peerRegistry, proxyRegistry);
-
-        peerRegistry.subscribeOnRemotePeerChanged(proxyRegistry::updateProxyRemotePeer);
-
-        if (Mode.CLIENT_SERVER == mode) {
-            createClient();
-            createServer();
-        } else if (Mode.CLIENT == mode) {
-            createClient();
-        } else if (Mode.SERVER == mode) {
-            createServer();
-        }
-
-        peerManager.start();
     }
 
     private void createClient() {
@@ -78,11 +83,11 @@ public class ReLServer {
 
     //todo proper order
     public void stop() {
-        if (hub != null) {
-            hub.stop();
-        }
         if (client != null) {
             client.stop();
+        }
+        if (hub != null) {
+            hub.stop();
         }
         if (server != null) {
             server.stop();

@@ -2,21 +2,31 @@
   {
     "id": "glmc2bp",
     "port": 7891,
-    "title": "Modern Combat 2 Black Pegasus"
+    "title": "Modern Combat 2 [ANDROID]"
+  },
+  {
+    "id": "glmc2bp_ios",
+    "port": 7891,
+    "title": "Modern Combat 2 [IOS]"
   },
   {
     "id": "glmc3fn",
     "port": 7893,
-    "title": "Modern Combat 3 Fallen Nation"
+    "title": "Modern Combat 3 [ANDROID]"
+  },
+  {
+    "id": "glmc3fn",
+    "port": 7893,
+    "title": "Modern Combat 3 [IOS]"
   },
   {
     "id": "glmc4zh",
     "port": 7897,
-    "title": "Modern Combat 4 Zero Hour"
+    "title": "Modern Combat 4 [IOS/ANDROID]"
   },
   {
     "id": "glnova3",
     "port": 7891,
-    "title": "N.O.V.A 3"
+    "title": "N.O.V.A 3 [IOS/ANDROID]"
   }
 ]

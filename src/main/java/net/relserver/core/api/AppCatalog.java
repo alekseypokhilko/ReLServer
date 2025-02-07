@@ -10,5 +10,8 @@ public interface AppCatalog {
 
     App getApp(String appId, Integer port);
     List<App> getApps();
+
+    List<String> getAppNamesWithStats();
+
     Map<String, AppStat> getAppStats();
 }

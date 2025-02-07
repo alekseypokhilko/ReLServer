@@ -19,7 +19,8 @@ public class PeerManagerClient {
 
     public void startConnection(Host service) throws IOException {
         socket = new Socket();
-        socket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 5000);
+        socket.setReuseAddress(true);
+        socket.connect(new InetSocketAddress(service.getIp(), service.getPort()), 1000);
         out = new PrintWriter(socket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
@@ -52,7 +53,9 @@ public class PeerManagerClient {
     }
 
     public void stop() {
-        receiver.interrupt();
+        if (receiver != null) {
+            receiver.interrupt();
+        }
         try {
             socket.close();
         } catch (IOException e) {

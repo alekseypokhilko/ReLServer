@@ -16,7 +16,7 @@ public class UdpPort implements Port<DatagramPacket> {
     private final Settings settings;
     private final DatagramSocket udpSocket;
     private Consumer<DatagramPacket> onPacketReceived;
-    private Thread receiverThread;
+    private final Thread receiverThread;
 
     public UdpPort(Integer port, Settings settings) {
         this.settings = settings;
@@ -28,39 +28,37 @@ public class UdpPort implements Port<DatagramPacket> {
         }
         String prefix = Constants.PORT_PREFIX + udpSocket.getLocalPort();
         this.id = Id.generateId(prefix);
-        runReceiverThread();
+        receiverThread = new Thread(this::receiverLoop, this.id + "-thread");
+        receiverThread.start();
     }
 
     public void setOnPacketReceived(Consumer<DatagramPacket> onPacketReceived) {
         this.onPacketReceived = onPacketReceived;
     }
 
-    protected void runReceiverThread() {
-        receiverThread = new Thread(() -> {
-            Integer bufSize = settings.getInt(Settings.packetBufferSize);
-            while (!Thread.interrupted()) {
-                try {
-                    byte[] buf2 = new byte[bufSize];  //todo check GC stats
-                    DatagramPacket packet = new DatagramPacket(buf2, buf2.length);
-                    if (udpSocket.isClosed()) {
-                        Logger.log("Socket %s closed", this.id);
-                        return;
-                    }
-                    udpSocket.receive(packet);
-                    Logger.logPacket(id, packet, false);
-                    if (this.onPacketReceived != null) {
-                        this.onPacketReceived.accept(packet);
-                    }
-                } catch (SocketTimeoutException ignore) {
-                } catch (SocketException ignore) {
+    private void receiverLoop() {
+        Integer bufSize = settings.getInt(Settings.packetBufferSize);
+        while (!Thread.interrupted()) {
+            try {
+                byte[] buf2 = new byte[bufSize];  //todo check GC stats
+                DatagramPacket packet = new DatagramPacket(buf2, buf2.length);
+                if (udpSocket.isClosed()) {
                     Logger.log("Socket %s closed", this.id);
                     return;
-                } catch (Exception e) {
-                    e.printStackTrace();//todo
                 }
+                udpSocket.receive(packet);
+                Logger.logPacket(id, packet, false);
+                if (this.onPacketReceived != null) {
+                    this.onPacketReceived.accept(packet);
+                }
+            } catch (SocketTimeoutException ignore) {
+            } catch (SocketException ignore) {
+                Logger.log("Socket %s closed", this.id);
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();//todo
             }
-        }, this.id + "-thread");
-        receiverThread.start();
+        }
     }
 
     public void send(DatagramPacket packet, Host host) {

@@ -10,6 +10,7 @@ import net.relserver.core.http.SocketRequest;
 import net.relserver.core.peer.HubLoader;
 import net.relserver.core.util.Utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,9 @@ public class DefaultAppCatalog implements AppCatalog {
     public App getApp(String appId, Integer port) {
         loadApps();
         if (port != null) {
-            return new App(appId == null ? "unknown" : appId, port, "Unknown App");
+            App app = new App(appId == null ? "custom" : appId, port, "My app (custom settings)");
+            apps.add(0, app);
+            return app;
         } else {
             for (App app : apps) {
                 if (app.getId().equals(appId)) {
@@ -39,6 +42,7 @@ public class DefaultAppCatalog implements AppCatalog {
         }
     }
 
+    @Override
     public Map<String, AppStat> getAppStats() {
         String response = SocketRequest.execute(
                 HubLoader.getHubIps(settings).get(0), //todo remove static
@@ -49,9 +53,27 @@ public class DefaultAppCatalog implements AppCatalog {
         return stats == null ? new HashMap<>() : stats;
     }
 
+    @Override
+    public List<String> getAppNamesWithStats() {
+        loadApps();
+        Map<String, AppStat> appStats = getAppStats();
+        List<String> appNames = new ArrayList<>();
+        for (App app : apps) {
+            AppStat stat = appStats.get(app.getId());
+            appNames.add(stat == null
+                    ? formatName(0, 0, app.getTitle())
+                    : formatName(stat.getServers(), stat.getClients(), app.getTitle()));
+        }
+        return appNames;
+    }
+
     public List<App> getApps() {
         loadApps();
         return apps;
+    }
+
+    private static String formatName(int serverCount, int clientCount, String title) {
+        return String.format("S:%s C:%s | %s", serverCount, clientCount, title);
     }
 
     private void loadApps() {

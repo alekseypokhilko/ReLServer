@@ -2,6 +2,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+/android/app/release/*
+/android/app/debug/*
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -11,6 +13,7 @@ target/
 *.iws
 *.iml
 *.ipr
+/android/.idea/**
 
 ### Eclipse ###
 .apt_generated

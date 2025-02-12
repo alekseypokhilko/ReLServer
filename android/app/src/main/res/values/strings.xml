@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">ReLServer</string>
+    <string name="app_info">Retro LAN Server v1.0.0</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting...</string>
+    <string name="disconnecting">Disconnecting...</string>
+    <string name="connected">Connected</string>
+    <string name="client_mode">Client mode</string>
+    <string name="server_mode">Sever mode</string>
+    <string name="application">Application:</string>
+    <string name="mode">Mode:</string>
+
+    <string name="save">Save</string>
+    <string name="localServerIpLabel">Custom local server IP</string>
+    <string name="customAppIdLabel">Custom app id</string>
+    <string name="customAppPortLabel">Custom app port</string>
+    <string name="customHubIpLabel">Custom Hub IP</string>
+</resources>

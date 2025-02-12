@@ -28,6 +28,7 @@ public class Peer {
      */
     private final String appId;
     private Host host;
+    public transient long timestamp = System.currentTimeMillis();
 
     public static Peer of(String peerManagerId, String id, State state, Mode mode, String remotePeerManagerId, String peerId, String appId, Host host) {
         return new Peer(peerManagerId, id, state, mode, remotePeerManagerId, peerId, appId, host);

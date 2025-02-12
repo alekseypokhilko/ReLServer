@@ -57,7 +57,9 @@ public class PeerManagerClient {
             receiver.interrupt();
         }
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             Logger.log("Exception while closing client socket: %s", e.getMessage());
         }

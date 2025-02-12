@@ -29,8 +29,10 @@ public class DefaultAppCatalog implements AppCatalog {
     public App getApp(String appId, Integer port) {
         loadApps();
         if (port != null) {
-            App app = new App(appId == null ? "custom" : appId, port, "My app (custom settings)");
-            apps.add(0, app);
+            String customAppId = appId == null ? "custom" : String.format("%s:%s", appId, port);
+            String customAppTitle = String.format("APP %s", customAppId);
+            App app = new App(customAppId, port, customAppTitle);
+            apps.add(app);
             return app;
         } else {
             for (App app : apps) {
@@ -38,7 +40,7 @@ public class DefaultAppCatalog implements AppCatalog {
                     return app;
                 }
             }
-            throw new IllegalArgumentException("Cannot create app. Provide correct parameters '-appId' and '-appPort'");
+            throw new IllegalArgumentException("Illegal 'appId' or 'appPort'");
         }
     }
 

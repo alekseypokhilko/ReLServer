@@ -11,6 +11,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClientRegistry {
     //peerManagerId <=> instance
     private final Map<String, Client> clients = new ConcurrentHashMap<>();
+    private final Thread worker;
+
+    public ClientRegistry() {
+        worker = new Thread(this::clientRegistryWorkerLoop, "clientRegistryWorker");
+        worker.start();
+    }
+
+    private void clientRegistryWorkerLoop() {
+        while (!Thread.interrupted()) {
+            for (Client client : clients.values()) {
+                ping(client);
+            }
+            try {
+                Thread.sleep(10000L);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
+    private static void ping(Client client) {
+        client.sendMessage("");
+    }
 
     public void add(Client client) {
         this.clients.put(client.getPeerManagerId(), client);
@@ -25,6 +48,7 @@ public class ClientRegistry {
     }
 
     public void stop() {
+        worker.interrupt();
         for (Client client : clients.values()) {
             client.stop();
         }

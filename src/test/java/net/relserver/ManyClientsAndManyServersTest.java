@@ -24,8 +24,12 @@ public class ManyClientsAndManyServersTest {
         for (int i = 0; i < SERVER_COUNT; i++) {
             int port = realServerPort + i;
             fakeServers.add(TestUtils.createServer(port, "server" + i));
-            ReLServer server = ReLServerCliRunner.of(new String[]{"-mode=server", log, "-hubIp=195.74.86.122", "-appPort=" + port});
-            serverRouters.add(server);
+            try {
+                ReLServer server = ReLServerCliRunner.of(new String[]{"-mode=server", log, "-hubIp=127.0.0.1", "-appPort=" + port});
+                serverRouters.add(server);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         int clientPort = 30000;

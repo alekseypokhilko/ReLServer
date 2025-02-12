@@ -95,8 +95,12 @@ public class ReLServer {
         if (peerManager != null) {
             peerManager.stop();
         }
-        peerRegistry.stop();
-        proxyRegistry.stop();
+        if (peerRegistry != null) {
+            peerRegistry.stop();
+        }
+        if (proxyRegistry != null) {
+            proxyRegistry.stop();
+        }
     }
 
     public Hub getHub() {

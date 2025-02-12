@@ -1,5 +1,50 @@
 [
   {
+    "id": "glasph5",
+    "port": 7891,
+    "title": "Asphalt 5 [ANDROID]"
+  },
+  {
+    "id": "glasph6a",
+    "port": 7651,
+    "title": "Asphalt 6 [ANDROID]"
+  },
+  {
+    "id": "glasph6a_ios",
+    "port": 7651,
+    "title": "Asphalt 6 [IOS]"
+  },
+  {
+    "id": "glasph7h",
+    "port": 7651,
+    "title": "Asphalt 7 [ANDROID]"
+  },
+  {
+    "id": "glasph7h_ios",
+    "port": 7651,
+    "title": "Asphalt 7 [IOS]"
+  },
+  {
+    "id": "glbia2free_ios",
+    "port": 8376,
+    "title": "Brother In Arms 2 Free+ [IOS]"
+  },
+  {
+    "id": "glf5tmog",
+    "port": 7891,
+    "title": "Fast Five [ANDROID]"
+  },
+  {
+    "id": "glmc1s",
+    "port": 7891,
+    "title": "Modern Combat [ANDROID]"
+  },
+  {
+    "id": "glmc1s_ios",
+    "port": 7891,
+    "title": "Modern Combat [IOS]"
+  },
+  {
     "id": "glmc2bp",
     "port": 7891,
     "title": "Modern Combat 2 [ANDROID]"
@@ -15,7 +60,7 @@
     "title": "Modern Combat 3 [ANDROID]"
   },
   {
-    "id": "glmc3fn",
+    "id": "glmc3fn_ios",
     "port": 7893,
     "title": "Modern Combat 3 [IOS]"
   },
@@ -25,8 +70,23 @@
     "title": "Modern Combat 4 [IOS/ANDROID]"
   },
   {
+    "id": "glnova2",
+    "port": 7891,
+    "title": "N.O.V.A 2 [ANDROID]"
+  },
+  {
     "id": "glnova3",
     "port": 7891,
-    "title": "N.O.V.A 3 [IOS/ANDROID]"
+    "title": "N.O.V.A 3 [ANDROID]"
+  },
+  {
+    "id": "glnova3_ios",
+    "port": 7891,
+    "title": "N.O.V.A 3 [IOS]"
+  },
+  {
+    "id": "gltcr6sw",
+    "port": 7891,
+    "title": "Tom Clancy's R6SW [ANDROID]"
   }
 ]

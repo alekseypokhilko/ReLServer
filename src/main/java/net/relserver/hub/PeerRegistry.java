@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 public class PeerRegistry {
     private final ClientRegistry clientRegistry;
@@ -72,10 +73,15 @@ public class PeerRegistry {
     }
 
     public void sendAllPeers(Client client) {
+        long now = System.currentTimeMillis();
         for (Peer peer : peers.values()) {
             if (client.getAppId().equals(peer.getAppId())
                     && (peer.isRouter() || client.getPeerManagerId().equals(peer.getRemotePeerManagerId()))) {
                 sendPeer(client, peer);
+            }
+            if (!peer.isRouter()
+                    && now - peer.timestamp > TimeUnit.MINUTES.toMillis(5)) {
+                peers.remove(peer.getId());
             }
         }
     }
